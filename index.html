@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Niko Auto Core | Customer Prices</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#16222b;background:#f1f5f7}*{box-sizing:border-box}body{margin:0}header{background:#123142;color:#fff;padding:18px max(18px,calc((100vw - 920px)/2))}header strong{font-size:1.25rem}header small{display:block;color:#bce5da;margin-top:4px}main{max-width:920px;margin:28px auto;padding:0 18px}.card{background:#fff;border:1px solid #dbe4e9;border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:0 3px 14px #16222b0a}h1,h2{margin:0 0 16px}h1{font-size:1.45rem}h2{font-size:1.15rem}p{line-height:1.5}label{display:block;font-weight:600;margin:15px 0 5px}input{font:inherit;width:100%;padding:12px;border:1px solid #9faeb7;border-radius:8px}button{font:inherit;cursor:pointer;border:0;border-radius:8px;background:#08624e;color:#fff;padding:11px 17px;margin-top:14px}button:disabled{opacity:.5;cursor:default}.secondary{background:#e7f0ed;color:#124236}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.row>*{flex:1}.notice{min-height:1.5em;color:#8b251c}.muted{color:#53646d}.hide{display:none}.result{border-top:1px solid #e2e8eb;padding:14px 0;display:flex;justify-content:space-between;gap:16px}.price{font-weight:700;white-space:nowrap}.cartrow{border-top:1px solid #e2e8eb;padding:12px 0}.cartrow input{width:72px;padding:6px}.cartrow button{margin:0}.summary{font-weight:700;text-align:right;margin-top:15px}@media(max-width:500px){.card{padding:18px}.result{font-size:.94rem}}
+  </style>
+</head>
+<body>
+<header><strong>Niko Auto Core USA</strong><small>Private customer price catalogue</small></header>
+<main>
+  <section id="login" class="card hide">
+    <h1>Customer sign in</h1><p class="muted">Use the email address invited by Niko. Use a new password that you have not used on the old site.</p>
+    <form id="loginForm"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button id="loginButton">Sign in</button></form>
+    <p><button id="forgot" class="secondary" type="button">Email me a password reset link</button></p><p id="loginMessage" class="notice" role="status"></p>
+  </section>
+  <section id="setPassword" class="card hide">
+    <h1>Set your new password</h1><p class="muted">Choose a unique password with at least 12 characters.</p>
+    <form id="passwordForm"><label for="newPassword">New password</label><input id="newPassword" type="password" minlength="12" autocomplete="new-password" required><button>Save password</button></form><p id="passwordMessage" class="notice" role="status"></p>
+  </section>
+  <section id="pending" class="card hide"><h1>Waiting for approval</h1><p>Your account is created. Contact Niko Auto Core USA to activate customer price access.</p><button class="secondary logout">Sign out</button></section>
+  <div id="app" class="hide">
+    <section class="card"><div class="row"><h1 style="margin:0">Search prices</h1><button class="secondary logout" style="flex:0 0 auto;margin:0">Sign out</button></div><p class="muted">Enter at least 3 letters or numbers from a converter code. Prices include your assigned discount.</p><form id="searchForm" class="row"><input id="query" aria-label="Converter code" placeholder="Converter code" required minlength="3" maxlength="80"><button id="searchButton" style="flex:0 0 auto;margin:0">Search</button></form><p id="searchMessage" class="notice" role="status"></p><div id="results"></div></section>
+    <section class="card"><h2>My list</h2><p class="muted">Use this list to plan an order. It is saved only in this browser; call Niko to place the order.</p><div id="cart"></div><p id="total" class="summary"></p><button id="print" class="secondary" type="button">Print list</button><button id="clear" class="secondary" type="button">Clear list</button></section>
+  </div>
+</main>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const initialFragment = new URLSearchParams(location.hash.slice(1));
+let settingPassword = ['invite','recovery'].includes(initialFragment.get('type'));
+const supabase = createClient('https://mcykfvemgrdczytlbojm.supabase.co', 'sb_publishable_vI4r-0U6idwr6fLcsEF4iQ_cCtMyk5o');
+const $ = id => document.getElementById(id);
+const show = id => {for(const name of ['login','setPassword','pending','app']) $(name).classList.toggle('hide',name!==id)};
+const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
+let account = null, cart = [];
+function renderCart(){const box=$('cart');box.replaceChildren();let total=0;for(const [i,item] of cart.entries()){total+=item.price*item.qty;const row=document.createElement('div');row.className='cartrow row';const title=document.createElement('span');title.textContent=item.code+(item.model?' · '+item.model:'')+' · '+money(item.price);const qty=document.createElement('input');qty.type='number';qty.min='1';qty.max='999';qty.value=item.qty;qty.setAttribute('aria-label','Quantity for '+item.code);qty.onchange=()=>{item.qty=Math.max(1,Math.min(999,Number(qty.value)||1));renderCart()};const remove=document.createElement('button');remove.className='secondary';remove.textContent='Remove';remove.onclick=()=>{cart.splice(i,1);renderCart()};row.append(title,qty,remove);box.append(row)}$('total').textContent=cart.length?'Estimated total: '+money(total):'Your list is empty.'}
+function renderResults(data){const box=$('results');box.replaceChildren();for(const entry of data){const row=document.createElement('div');row.className='result';const name=document.createElement('div');const code=document.createElement('strong');code.textContent=entry.serial_code;const model=document.createElement('div');model.className='muted';model.textContent=entry.model||'';name.append(code,model);const right=document.createElement('div');right.className='price';right.textContent=money(Number(entry.customer_price));const add=document.createElement('button');add.textContent='Add to list';add.className='secondary';add.style.margin='0';add.onclick=()=>{const old=cart.find(x=>x.code===entry.serial_code);if(old)old.qty++;else cart.push({code:entry.serial_code,model:entry.model||'',price:Number(entry.customer_price),qty:1});renderCart()};row.append(name,right,add);box.append(row)}}
+async function refresh(){if(settingPassword){show('setPassword');return}const {data:{user}}=await supabase.auth.getUser();account=user;if(!user){show('login');return}const {data,error}=await supabase.from('customer_profiles').select('active').eq('id',user.id).single();if(error){show('pending');return}show(data?.active?'app':'pending')}
+supabase.auth.onAuthStateChange((_event,_session)=>{setTimeout(refresh,0)});
+if(initialFragment.has('error_description')){$('loginMessage').textContent=initialFragment.get('error_description').replaceAll('+',' ')}
+refresh();
+$('loginForm').onsubmit=async e=>{e.preventDefault();$('loginButton').disabled=true;$('loginMessage').textContent='Signing in…';const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('password').value='';$('loginButton').disabled=false;$('loginMessage').textContent=error?error.message:'';if(!error)refresh()};
+$('passwordForm').onsubmit=async e=>{e.preventDefault();$('passwordMessage').textContent='Saving…';const {error}=await supabase.auth.updateUser({password:$('newPassword').value});$('newPassword').value='';$('passwordMessage').textContent=error?error.message:'';if(!error){settingPassword=false;history.replaceState(null,'',location.pathname+location.search);refresh()}};
+$('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){$('loginMessage').textContent='Enter your email first.';return}const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});$('loginMessage').textContent=error?error.message:'If that email has an account, a reset link has been sent.'};
+for(const button of document.querySelectorAll('.logout'))button.onclick=async()=>{cart=[];renderCart();await supabase.auth.signOut();show('login')};
+$('searchForm').onsubmit=async e=>{e.preventDefault();const q=$('query').value.trim();if(q.replace(/[^a-z0-9]/gi,'').length<3){$('searchMessage').textContent='Enter at least 3 letters or numbers.';return}$('searchButton').disabled=true;$('searchMessage').textContent='Searching…';$('results').replaceChildren();const {data,error}=await supabase.rpc('search_converter_prices',{query_text:q});$('searchButton').disabled=false;$('searchMessage').textContent=error?error.message:!data?.length?'No matching codes found.':data.length===30?'Showing the first 30 matches. Add more characters to narrow your search.':'';if(data)renderResults(data)};
+$('clear').onclick=()=>{cart=[];renderCart()};$('print').onclick=()=>window.print();renderCart();
+</script>
+</body>
+</html>
