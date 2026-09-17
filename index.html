@@ -1,69 +1,959 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Niko Auto Core | Customer Prices</title>
-  <style>
-    :root{font-family:Arial,Helvetica,sans-serif;color:#f4f6fb;background:#050811;--gold:#e0aa18;--green:#35b84d;--muted:#aab4c2;--border:#2a3444;--panel:#080d16}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#050811,#101725)}header{max-width:800px;margin:0 auto;text-align:center;padding:45px 18px 4px}header strong{display:block;font-size:clamp(2.2rem,7vw,3.7rem);font-weight:900;letter-spacing:1px}header .gold{color:var(--gold)}header small{display:block;color:var(--muted);font-size:1.25rem;margin-top:7px}body:not(.signed-in) header{display:none}main{max-width:800px;margin:22px auto;padding:0 18px 50px}.card{background:#141c27;border:1px solid var(--border);border-radius:24px;padding:28px;margin-bottom:22px}#login{max-width:560px;margin:48px auto;border-top:5px solid var(--gold);box-shadow:0 20px 55px #0006}.login-logo{text-align:center;font-size:clamp(2rem,6vw,3rem);font-weight:900;margin:5px 0 8px}.login-sub{text-align:center;color:var(--muted);font-size:1.1rem;margin:0 0 26px}h1,h2{margin:0 0 18px}h1{font-size:1.7rem;color:var(--gold)}h2{font-size:1.45rem;color:var(--gold)}p{line-height:1.5}label{display:block;font-weight:700;margin:17px 0 6px}input{font:inherit;width:100%;padding:17px;background:var(--panel);color:#fff;border:1px solid var(--border);border-radius:15px;min-width:0;font-size:1.1rem}input:focus{outline:2px solid var(--gold);outline-offset:1px}button{font:inherit;font-weight:800;cursor:pointer;border:0;border-radius:15px;background:var(--gold);color:#111;padding:15px 20px;margin-top:14px}button:disabled{opacity:.5;cursor:default}.secondary{background:transparent;border:1px solid var(--gold);color:var(--gold)}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.row>*{flex:1}.notice{min-height:1.5em;color:#ff9797}.muted{color:var(--muted)}.hide{display:none!important}.result{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:20px;margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.result.exact{border-color:#357b47;padding:26px}.result strong{display:block;color:var(--green);font-size:1.75rem;overflow-wrap:anywhere}.result.exact strong{font-size:2.25rem}.result .price{color:#fff;font-weight:900;font-size:1.8rem;white-space:nowrap}.result.exact .price{color:var(--green);font-size:clamp(3rem,10vw,5rem)}.result button{margin:0}.cartrow{border-top:1px solid var(--border);padding:12px 0}.cartrow input{width:78px;padding:8px;flex:0 0 78px}.cartrow button{margin:0;flex:0 0 auto}.summary{font-size:1.7rem;color:var(--green);font-weight:900;text-align:right;margin-top:15px}a{color:var(--gold)}footer{text-align:center;color:var(--muted);padding:0 18px 35px;line-height:1.6}.login-help{background:#0b111d;border:1px solid var(--border);border-radius:18px;padding:16px;text-align:center;margin-top:20px}.login-help a{display:block;font-size:1.3rem;font-weight:900;margin-top:5px;text-decoration:none}@media(max-width:600px){header{padding-top:24px}.card{padding:19px}.row{align-items:stretch}#searchForm,#previewForm{flex-direction:column}#searchForm>*,#previewForm>*{width:100%;flex:auto!important}.result{align-items:stretch}.result button{width:100%}.result.exact .price{width:100%}.cartrow span{flex-basis:100%}.cartrow input{width:78px;flex:0 0 78px}}@media print{body{background:#fff;color:#000}header,#login,#setPassword,#pending,#manager,#app>.card:first-child,footer,#print,#clear,.cartrow button{display:none!important}#app>.card{background:#fff;color:#000;border:0;padding:0}.summary{color:#000}}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Niko Auto Core USA | Customer Login</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--card:#141c27;--panel:#080d16;--border:#2a3444;--gold:#e0aa18;--green:#35b84d;--text:#f4f6fb;--muted:#9aa3b2;--red:#ff6b6b}
+*{box-sizing:border-box}
+html{min-height:100%;background:#050811;overscroll-behavior-y:none}
+body{margin:0;min-height:100vh;min-height:100dvh;font-family:Arial,Helvetica,sans-serif;background-color:#050811;background-image:linear-gradient(180deg,#050811 0%,#101725 100%);background-repeat:no-repeat;color:var(--text);overflow-x:hidden;overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:760px;margin:auto;padding:42px 18px 80px;min-height:100vh;min-height:100dvh}
+.site-head{display:none}
+body.logged-in .site-head{display:block}
+body:not(.logged-in) footer{display:none}
+h1{text-align:center;font-size:clamp(35px,7vw,58px);margin:35px 0 8px;letter-spacing:1px;font-weight:900}
+.gold{color:var(--gold)} .subtitle{text-align:center;color:var(--muted);font-size:22px;margin-bottom:34px}
+.card{background:rgba(20,28,39,.96);border:1px solid var(--border);border-radius:24px;padding:28px;margin:22px 0}
+input,button{font-size:22px;border-radius:18px}
+input{width:100%;padding:20px;background:var(--panel);color:var(--text);border:1px solid var(--border);outline:none;margin:8px 0}
+.search-row{display:flex;gap:14px}.search-row input{text-transform:uppercase;margin:0}
+button{background:var(--gold);border:0;color:#111;font-weight:900;padding:18px 30px;cursor:pointer}
+.status,footer{color:var(--muted);line-height:1.45}.result{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:28px;margin-top:24px;min-height:145px;font-size:22px}
+.code{color:var(--muted);font-size:24px}.price{font-size:78px;color:var(--green);font-weight:900;margin-top:12px}
+.info{background:#101827;border:1px solid #27344a;border-radius:18px;padding:18px;margin-top:24px;color:var(--muted);font-size:20px}
+footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weight:900;text-decoration:none;display:block;margin-top:6px;font-size:20px}.small{font-size:18px;color:var(--muted)}.error{color:var(--red);font-weight:800}
+.hidden{display:none}.login-title{text-align:center;font-size:30px;color:var(--gold);margin:0 0 15px}.login-card{max-width:560px;margin:45px auto}
+.logout{background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:16px;padding:10px 14px;border-radius:12px;margin-top:18px}
+.welcome{color:var(--gold);font-weight:900}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.manual-add{display:grid;grid-template-columns:1.5fr 1fr auto;gap:10px;margin-top:16px;align-items:center}
+.manual-add input{font-size:18px;padding:14px;margin:0;border-radius:14px}
+.manual-add button{font-size:18px;padding:14px 18px;border-radius:14px}
+.actions button{font-size:18px;padding:14px 18px;border-radius:14px;width:auto}
+.btn-secondary{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+.btn-danger{background:var(--red);color:#111}
+.order-card{margin-top:18px;background:#0b111d;border:1px solid var(--border);border-radius:20px;padding:18px}
+.order-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:900;color:var(--gold);font-size:22px;margin-bottom:10px}
+.order-table{width:100%;border-collapse:collapse;font-size:18px}
+.order-table th,.order-table td{border-bottom:1px solid #263244;padding:10px 6px;text-align:left}
+.order-table th{text-transform:uppercase;color:var(--muted);font-size:14px}
+.qtybox{width:82px;font-size:18px;padding:8px;border-radius:10px;margin:0;text-align:center}
+.remove-btn{font-size:14px;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid var(--red);color:var(--red)}
+.total-line{text-align:right;font-size:28px;font-weight:900;color:var(--green);margin-top:14px}
+.similar-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 4px;border-bottom:1px solid #1d2736;line-height:1.25}.similar-row:last-child{border-bottom:0}.similar-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.similar-code{color:var(--green);font-size:32px;font-weight:900;letter-spacing:.3px}.similar-price{color:#fff;font-size:30px;font-weight:900}.similar-buttons{display:flex;gap:10px;flex-wrap:wrap}.similar-add,.image-btn{font-size:19px;padding:14px 18px;border-radius:14px;min-width:105px;width:auto}.image-btn{background:transparent;border:2px solid var(--green);color:var(--green)}.exact-code{color:var(--green);font-size:38px;font-weight:900;letter-spacing:.4px}.exact-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.image-modal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}.image-modal.hidden{display:none}.image-box{width:min(720px,100%);max-height:92vh;overflow:auto;background:#101827;border:1px solid #334158;border-radius:20px;padding:16px;text-align:center}.image-box img{max-width:100%;max-height:70vh;border-radius:14px;background:#fff}.image-title{font-size:27px;font-weight:900;color:var(--green);margin:4px 0 14px}.image-message{color:var(--muted);font-size:18px;margin:14px}.close-image{margin-top:14px;background:var(--red);font-size:18px;padding:12px 20px}.print-area-title{display:none}
+.login-card{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(20,28,39,.98),rgba(10,15,25,.98));box-shadow:0 20px 55px rgba(0,0,0,.35)}
+.login-card:before{content:"";position:absolute;inset:0;border-top:5px solid var(--gold);pointer-events:none}
+.login-logo{text-align:center;font-size:clamp(31px,6vw,48px);font-weight:900;letter-spacing:1px;line-height:1.05;margin:8px 0 10px;color:#fff}
+.login-sub{text-align:center;color:var(--muted);font-size:18px;margin:0 0 22px}
+.login-help{background:#0b111d;border:1px solid #263244;border-radius:18px;padding:16px;margin-top:18px;text-align:center;color:var(--muted);line-height:1.35;font-size:18px}
+.login-help a{color:var(--gold);font-weight:900;text-decoration:none;font-size:22px;display:inline-block;margin-top:5px}
+.login-note{text-align:center;color:var(--muted);font-size:15px;margin-top:13px}
+.login-btn{width:100%;margin-top:10px}
+.request-access-btn{width:100%;margin-top:10px;background:transparent;color:var(--gold);border:2px solid var(--gold)}
+.access-request{margin-top:14px;padding:16px;background:#080d16;border:1px solid #2a3444;border-radius:16px;text-align:left}
+.access-request h2{font-size:23px;color:var(--gold);margin:0 0 5px;text-align:center}
+.access-request .request-intro{font-size:16px;color:var(--muted);text-align:center;margin:0 0 13px;line-height:1.4}
+.access-request label{display:block;color:var(--muted);font-size:14px;font-weight:800;margin:10px 0 5px}
+.access-request input{margin:0;font-size:17px;padding:13px}
+.access-request .optional{font-weight:400;font-size:12px}
+.access-request .request-send{width:100%;margin-top:14px;background:var(--green);color:#061109}
+.access-request .request-cancel{width:100%;margin-top:8px;background:transparent;color:var(--muted);border:1px solid var(--border)}
+.request-privacy{text-align:center;color:var(--muted);font-size:13px;margin:10px 0 0;line-height:1.35}
+.manager-launch{display:none;width:100%;margin:0 0 18px;background:linear-gradient(135deg,#e0aa18,#f2c84b);color:#111;box-shadow:0 8px 22px rgba(224,170,24,.22)}
+.manager-screen{display:none;max-width:1120px;margin:auto}.manager-screen.active{display:block}.manager-screen .manager-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.manager-screen .manager-title{margin:0;font-size:clamp(25px,5vw,38px);text-align:left}.manager-screen .manager-back{width:auto;font-size:16px;padding:11px 15px;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:12px}.manager-tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px;padding-bottom:4px}.manager-tab{white-space:nowrap;width:auto;background:#172437;color:var(--muted);border:1px solid var(--border);font-size:16px;padding:11px 14px;border-radius:11px}.manager-tab.active{background:var(--gold);color:#111}.manager-page{display:none}.manager-page.active{display:block}.manager-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}.manager-stat{background:#101a28;border:1px solid var(--border);border-radius:16px;padding:15px}.manager-stat span{display:block;color:var(--muted);font-size:13px}.manager-stat strong{display:block;font-size:25px;margin-top:7px}.manager-section{background:#101a28;border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:13px}.manager-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.manager-section h2{margin:0;font-size:19px}.manager-add{width:auto;font-size:15px;padding:10px 13px;border-radius:10px}.manager-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}.manager-table{width:100%;border-collapse:collapse;min-width:650px;background:#0a121d;font-size:14px}.manager-table th,.manager-table td{padding:11px;border-bottom:1px solid #243145;text-align:left}.manager-table th{color:var(--muted);font-size:11px;text-transform:uppercase}.manager-delete{width:auto;background:#3b1920;color:#ff8d8d;font-size:12px;padding:7px 9px;border-radius:8px}.manager-empty{text-align:center!important;color:var(--muted);padding:25px!important}.manager-form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.manager-field label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}.manager-field input,.manager-field select{font-size:16px;padding:12px;margin:0;border-radius:10px}.manager-form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:5px}.manager-form-actions button{width:auto;font-size:15px;padding:10px 14px;border-radius:9px}.manager-cancel{background:transparent;color:var(--muted);border:1px solid var(--border)}.manager-form-card{display:none}.manager-form-card.open{display:block}
+@media print{body{background:#fff;color:#000}.wrap{max-width:100%;padding:10px}.login-card,.search-row,#result,.info,.logout,footer,#status,.actions:not(.print-actions){display:none!important}.card,.order-card{border:0;background:#fff;color:#000;padding:0}.print-area-title{display:block;color:#000;text-align:center}.order-table th,.order-table td{border-bottom:1px solid #ccc}.total-line{color:#000}}
+@media(max-width:760px){.manager-grid{grid-template-columns:repeat(2,1fr)}.manager-form{grid-template-columns:1fr}.manager-form-actions{grid-column:1}}
+@media(max-width:620px){.search-row{flex-direction:column}.manual-add{grid-template-columns:1fr}button{width:100%}.price{font-size:58px}.wrap{padding-top:20px}.similar-row{align-items:stretch;flex-direction:column;padding:20px 2px}.similar-code{font-size:31px}.similar-price{font-size:28px}.similar-buttons{display:grid;grid-template-columns:1fr 1fr}.similar-add,.image-btn{width:100%;font-size:20px;padding:16px 10px}.exact-code{font-size:34px}.exact-actions{display:grid;grid-template-columns:1fr 1fr}.manager-screen .manager-back,.manager-add,.manager-tab{width:auto}}
+</style>
 </head>
 <body>
-<header><strong><span class="gold">NIKO</span> AUTO CORE USA</strong><small>Customer Price Search</small></header>
-<main>
-  <section id="login" class="card hide">
-    <div class="login-logo"><span style="color:var(--gold)">NIKO</span> AUTO CORE USA</div><p class="login-sub">Customer Login · Price Search · Orders</p><h1>Customer sign in</h1><p class="muted">Use the email address invited by Niko. Use a new password that you have not used on the old site.</p>
-    <form id="loginForm"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button id="loginButton">Sign in</button></form>
-    <p><button id="forgot" class="secondary" type="button">Email me a password reset link</button></p><p id="loginMessage" class="notice" role="status"></p><div class="login-help">Need help to sign in? Call or text Niko Auto Core USA<a href="tel:+14694222777">(469) 422-2777</a></div>
-  </section>
-  <section id="setPassword" class="card hide">
-    <h1>Set your new password</h1><p class="muted">Choose a unique password with at least 12 characters.</p>
-    <form id="passwordForm"><label for="newPassword">New password</label><input id="newPassword" type="password" minlength="12" autocomplete="new-password" required><button>Save password</button></form><p id="passwordMessage" class="notice" role="status"></p>
-  </section>
-  <section id="pending" class="card hide"><h1>Waiting for approval</h1><p>Your account is created. Contact Niko Auto Core USA to activate customer price access.</p><button class="secondary logout">Sign out</button></section>
-  <div id="app" class="hide">
-    <section class="card"><div class="row"><h1 style="margin:0">Search prices</h1><button class="secondary logout" style="flex:0 0 auto;margin:0">Sign out</button></div><p id="welcome" class="muted"></p><p class="muted">Enter at least 3 letters or numbers from a converter code. Prices include your assigned discount.</p><form id="searchForm" class="row"><input id="query" aria-label="Converter code" placeholder="TYPE CONVERTER CODE..." required minlength="3" maxlength="80"><button id="searchButton" style="flex:0 0 auto;margin:0">Search</button></form><p id="searchMessage" class="notice" role="status"></p><div id="results"></div></section>
-    <section id="manager" class="card hide"><h2>Manager · Kitco asking prices</h2><p class="muted">Copy the USD per troy ounce ASK prices from <a href="https://www.kitco.com/price" target="_blank" rel="noopener noreferrer">Kitco prices</a>. Enter new rates when the market changes. Your payout percentage applies to the metal value. Customer discounts apply afterward.</p><form id="ratesForm"><div class="row"><div><label for="ptAsk">Platinum ask ($/oz)</label><input id="ptAsk" type="number" min="0.01" max="1000000" step="0.01" required></div><div><label for="pdAsk">Palladium ask ($/oz)</label><input id="pdAsk" type="number" min="0.01" max="1000000" step="0.01" required></div><div><label for="rhAsk">Rhodium ask ($/oz)</label><input id="rhAsk" type="number" min="0.01" max="1000000" step="0.01" required></div></div><label for="payout">Payout percentage (0–100%)</label><input id="payout" type="number" min="0" max="100" step="0.01" value="95" required><button id="saveRates">Save rates and preview</button></form><p id="rateStatus" class="muted" role="status"></p><p id="rateMessage" class="notice" role="status"></p><form id="previewForm" class="row"><input id="previewCode" placeholder="Converter code to compare" aria-label="Converter code to compare" required minlength="3"><button style="flex:0 0 auto;margin:0">Compare prices</button></form><div id="previewResults"></div><div class="row"><button id="publishRates" type="button">Use manual rates for customers</button><button id="restorePrices" type="button" class="secondary">Use spreadsheet prices</button></div><p class="muted">Review a few known converter codes before switching. Rates are entered manually and are not live. Existing items in a customer’s list keep the price shown when added.</p></section>
-    <section class="card"><h2>Customer Order</h2><p class="muted">Use this list to plan an order. It is saved only in this browser; call Niko to place the order.</p><form id="manualForm" class="row"><input id="manualCode" placeholder="EXTRA CODE TO ORDER" aria-label="Extra converter code" required><input id="manualPrice" type="number" min="0" max="1000000" step="0.01" placeholder="PRICE" aria-label="Extra price" required><button style="flex:0 0 auto;margin:0">Add Extra</button></form><div id="cart"></div><p id="total" class="summary"></p><button id="print" class="secondary" type="button">Print Order</button> <button id="copy" class="secondary" type="button">Copy Order</button> <button id="clear" class="secondary" type="button">Clear Order</button></section>
+<main class="wrap">
+  <div class="site-head">
+    <h1><span class="gold">NIKO</span> AUTO CORE USA</h1>
+    <div class="subtitle">Customer Price Search</div>
   </div>
+
+  <section id="loginSection" class="card login-card">
+    <div class="login-logo"><span class="gold">NIKO</span> AUTO CORE USA</div>
+    <div class="login-sub">Customer Login • Price Search • Orders</div>
+    <input id="usernameInput" placeholder="Username" autocomplete="username" />
+    <input id="passwordInput" type="password" placeholder="Password" autocomplete="current-password" />
+    <button class="login-btn" onclick="login()">Login</button>
+    <p id="loginMessage" class="status"></p>
+    <button type="button" class="request-access-btn" onclick="toggleAccessRequest(true)">Request Login Access</button>
+    <div id="accessRequest" class="access-request hidden">
+      <h2>Request Login Access</h2>
+      <p class="request-intro">Enter your email to request an account. A phone number is not required.</p>
+      <label for="requestName">Your name</label>
+      <input id="requestName" autocomplete="name" placeholder="Full name" />
+      <label for="requestCompany">Company name</label>
+      <input id="requestCompany" autocomplete="organization" placeholder="Business or company" />
+      <label for="requestEmail">Email address</label>
+      <input id="requestEmail" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com" />
+      <label for="requestPhone">Phone number <span class="optional">(optional)</span></label>
+      <input id="requestPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Optional" />
+      <button type="button" class="request-send" onclick="sendAccessRequest()">Send Access Request</button>
+      <button type="button" class="request-cancel" onclick="toggleAccessRequest(false)">Cancel</button>
+      <p id="requestMessage" class="status"></p>
+      <p class="request-privacy">Your information is used only to respond to your login request.</p>
+    </div>
+    <div class="login-help">Already requested access? You may also call or text Niko Auto Core USA<br><a href="tel:+14694222777">Phone: (469) 422-2777</a></div>
+    <div class="login-note">Prices are not hedged. Confirm before sale.</div>
+  </section>
+
+  <section id="searchSection" class="card hidden">
+    <p id="welcome" class="welcome"></p>
+    <div class="search-row">
+      <input id="searchInput" placeholder="TYPE CONVERTER CODE..." autocomplete="off" />
+      <button onclick="searchCode()">Search</button>
+    </div>
+    <p id="status" class="status">Loading NIKO_Master_PPM_Catalogue.xlsx...</p>
+    <div id="result" class="result">Type converter code to search.</div>
+    <div class="manual-add">
+      <input id="manualCodeInput" placeholder="EXTRA CODE TO ORDER" autocomplete="off" />
+      <input id="manualPriceInput" placeholder="PRICE" inputmode="numeric" autocomplete="off" />
+      <button onclick="addManualToOrder()">Add Extra</button>
+    </div>
+    <div class="actions">
+      <button id="addOrderBtn" class="hidden" onclick="addCurrentToOrder()">Add to Order</button>
+      <button class="btn-secondary" onclick="printOrder()">Print Order</button>
+      <button class="btn-secondary" onclick="copyOrderText()">Copy Order</button>
+      <button class="btn-danger" onclick="clearOrder()">Clear Order</button>
+    </div>
+    <div class="order-card" id="orderCard">
+      <h2 class="print-area-title">Niko Auto Core USA Order</h2>
+      <div class="order-head"><span>Customer Order</span><span id="orderCount">0 items</span></div>
+      <div id="orderList" class="status">No items added yet.</div>
+      <div id="orderTotal" class="total-line">Total: $0</div>
+    </div>
+    <div class="info">Customers see code and final price only. Market numbers and formulas are not shown on this page.</div>
+    <button id="managerLaunchBtn" class="manager-launch" onclick="openBusinessManager()">Owner tools</button>
+    <button class="logout" onclick="logout()">Logout</button>
+  </section>
+
+  <section id="managerScreen" class="manager-screen">
+    <div class="manager-top"><h2 class="manager-title"><span class="gold">NIKO</span> BUSINESS MANAGER</h2><button class="manager-back" onclick="closeBusinessManager()">← Price App</button></div>
+    <nav class="manager-tabs">
+      <button class="manager-tab active" data-manager-page="managerDashboard" onclick="switchManagerPage(this)">Dashboard</button>
+      <button class="manager-tab" data-manager-page="managerPurchases" onclick="switchManagerPage(this)">Purchases</button>
+      <button class="manager-tab" data-manager-page="managerCustomers" onclick="switchManagerPage(this)">Customers</button>
+      <button class="manager-tab" data-manager-page="managerShipments" onclick="switchManagerPage(this)">Shipments</button>
+      <button class="manager-tab" data-manager-page="managerMarket" onclick="switchManagerPage(this)">Market &amp; Merge</button>
+    </nav>
+
+    <div id="managerDashboard" class="manager-page active">
+      <div class="manager-grid">
+        <div class="manager-stat"><span>Total Invested</span><strong id="bmCost">$0</strong></div>
+        <div class="manager-stat"><span>Expected Value</span><strong id="bmValue">$0</strong></div>
+        <div class="manager-stat"><span>Expected Profit</span><strong id="bmProfit" style="color:var(--green)">$0</strong></div>
+        <div class="manager-stat"><span>Converters in Stock</span><strong id="bmStock" class="gold">0</strong></div>
+        <div class="manager-stat"><span>Total Platinum</span><strong id="bmPtOz" class="gold">0.0000 oz</strong></div>
+        <div class="manager-stat"><span>Total Palladium</span><strong id="bmPdOz" class="gold">0.0000 oz</strong></div>
+        <div class="manager-stat"><span>Total Rhodium</span><strong id="bmRhOz" class="gold">0.0000 oz</strong></div>
+      </div>
+      <div class="manager-section"><div class="manager-section-head"><h2>Recent Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Paid</th><th>Value</th><th>Profit</th></tr></thead><tbody id="bmRecentRows"></tbody></table></div></div>
+    </div>
+
+    <div id="managerPurchases" class="manager-page">
+      <div id="bmPurchaseFormCard" class="manager-section manager-form-card"><h2>Add Converter Purchase</h2><form id="bmPurchaseForm" class="manager-form">
+        <div class="manager-field"><label>Date</label><input id="bmPDate" type="date" required></div><div class="manager-field"><label>Customer</label><select id="bmPCustomer" required></select></div>
+        <div class="manager-field"><label>Converter Serial — type to search live prices</label><input id="bmPSerial" list="bmSerialSuggestions" autocomplete="off" required><datalist id="bmSerialSuggestions"></datalist></div><div class="manager-field"><label>Quantity</label><input id="bmPQty" type="number" min="1" value="1" required></div>
+        <div class="manager-field"><label>Total Paid ($)</label><input id="bmPCost" type="number" min="0" step=".01" required></div><div class="manager-field"><label>Estimated Value ($)</label><input id="bmPValue" type="number" min="0" step=".01" required></div>
+        <div class="manager-field"><label>Weight (grams)</label><input id="bmPWeight" type="number" min="0"></div><div class="manager-field"><label>Pt oz (total)</label><input id="bmPPtOz" readonly></div>
+        <div class="manager-field"><label>Pd oz (total)</label><input id="bmPPdOz" readonly></div><div class="manager-field"><label>Rh oz (total)</label><input id="bmPRhOz" readonly></div>
+        <div class="manager-field"><label>Notes</label><input id="bmPNotes"></div>
+        <div class="manager-form-actions"><button type="button" class="manager-cancel" onclick="hideManagerForms()">Cancel</button><button>Save Purchase</button></div>
+      </form></div>
+      <div class="manager-section"><div class="manager-section-head"><h2>Converter Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Qty</th><th>Pt oz</th><th>Pd oz</th><th>Rh oz</th><th>Paid</th><th>Value</th><th>Profit</th><th></th></tr></thead><tbody id="bmPurchaseRows"></tbody></table></div></div>
+    </div>
+
+    <div id="managerCustomers" class="manager-page">
+      <div id="bmCustomerFormCard" class="manager-section manager-form-card"><h2>Add Customer</h2><form id="bmCustomerForm" class="manager-form">
+        <div class="manager-field"><label>Name</label><input id="bmCName" required></div><div class="manager-field"><label>Phone</label><input id="bmCPhone" type="tel"></div><div class="manager-field"><label>Company</label><input id="bmCCompany"></div><div class="manager-field"><label>Buying Discount (%)</label><input id="bmCDiscount" type="number" min="0" max="100" step=".1" value="0"></div><div class="manager-field"><label>Notes</label><input id="bmCNotes"></div>
+        <div class="manager-form-actions"><button type="button" class="manager-cancel" onclick="hideManagerForms()">Cancel</button><button>Save Customer</button></div>
+      </form></div>
+      <div class="manager-section"><div class="manager-section-head"><h2>Customers</h2><button class="manager-add" onclick="showManagerForm('customer')">+ Add Customer</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Name</th><th>Phone</th><th>Company</th><th>Discount</th><th>Purchases</th><th>Total Paid</th><th></th></tr></thead><tbody id="bmCustomerRows"></tbody></table></div></div>
+    </div>
+
+    <div id="managerShipments" class="manager-page">
+      <div id="bmShipmentFormCard" class="manager-section manager-form-card"><h2>Add Refinery Shipment</h2><form id="bmShipmentForm" class="manager-form">
+        <div class="manager-field"><label>Date</label><input id="bmSDate" type="date" required></div><div class="manager-field"><label>Shipment Name</label><input id="bmSName" required></div><div class="manager-field"><label>Refinery</label><input id="bmSRefinery" required></div><div class="manager-field"><label>Weight (lb)</label><input id="bmSWeight" type="number" min="0" step=".1"></div><div class="manager-field"><label>Expected Value ($)</label><input id="bmSExpected" type="number" min="0" step=".01"></div><div class="manager-field"><label>Received ($)</label><input id="bmSReceived" type="number" min="0" step=".01"></div><div class="manager-field"><label>Status</label><select id="bmSStatus"><option>Open</option><option>Paid</option></select></div>
+        <div class="manager-form-actions"><button type="button" class="manager-cancel" onclick="hideManagerForms()">Cancel</button><button>Save Shipment</button></div>
+      </form></div>
+      <div class="manager-section"><div class="manager-section-head"><h2>Refinery Shipments</h2><button class="manager-add" onclick="showManagerForm('shipment')">+ Add Shipment</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Shipment</th><th>Refinery</th><th>Weight</th><th>Expected</th><th>Received</th><th>Status</th><th></th></tr></thead><tbody id="bmShipmentRows"></tbody></table></div></div>
+    </div>
+    <div id="managerMarket" class="manager-page">
+      <div class="manager-section"><h2>Market inputs and merge</h2>
+        <p class="status">Enter USD per troy ounce. New value = Pt oz × Pt price + Pd oz × Pd price + Rh oz × Rh price, then apply recovery and merge. Zero means use the existing price for rows without ounce data.</p>
+        <div class="manager-form">
+          <div class="manager-field"><label for="bmMarketPt">Platinum ($/oz)</label><input id="bmMarketPt" type="number" min="0" step="any" inputmode="decimal"></div>
+          <div class="manager-field"><label for="bmMarketPd">Palladium ($/oz)</label><input id="bmMarketPd" type="number" min="0" step="any" inputmode="decimal"></div>
+          <div class="manager-field"><label for="bmMarketRh">Rhodium ($/oz)</label><input id="bmMarketRh" type="number" min="0" step="any" inputmode="decimal"></div>
+          <div class="manager-field"><label for="bmMarketRecovery">Recovery (%)</label><input id="bmMarketRecovery" type="number" min="0" max="100" step="any" value="95"></div>
+          <div class="manager-field"><label for="bmMarketMerge">Merge factor (%)</label><input id="bmMarketMerge" type="number" min="0" max="200" step="any" value="100"></div>
+          <div class="manager-field"><label for="bmMarketCode">Preview serial</label><input id="bmMarketCode" list="bmSerialSuggestions" autocomplete="off"></div>
+        </div>
+        <p id="bmMarketPreview" class="status">Enter market prices and a serial to preview.</p>
+        <button class="manager-add" type="button" onclick="downloadMarketWorkbook()">Download updated catalogue</button>
+        <p class="status">To update prices for every customer, upload the downloaded file to GitHub as <b>NIKO_Master_PPM_Catalogue.xlsx</b>, replacing the existing file. Until then, customer prices stay unchanged.</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="imageModal" class="image-modal hidden" onclick="closeImageModal(event)">
+    <div class="image-box" onclick="event.stopPropagation()">
+      <div id="imageTitle" class="image-title">Converter Image</div>
+      <div id="imageMessage" class="image-message">Loading image...</div>
+      <img id="converterImage" class="hidden" alt="Catalytic converter image" />
+      <br><button class="close-image" onclick="closeImageModal()">Close Image</button>
+    </div>
+  </div>
+
+  <footer>Prices are not hedged. Call Niko Auto Core USA to confirm before sale.<br><a class="phone-link" href="tel:+14694222777">Phone: (469) 422-2777</a></footer>
 </main>
-<div id="imageModal" class="hide" role="dialog" aria-modal="true" aria-label="Converter image" style="position:fixed;inset:0;background:#000e;z-index:5;display:grid;place-items:center;padding:18px"><div class="card" style="max-width:720px;width:100%;max-height:90vh;overflow:auto;text-align:center"><h2 id="imageTitle">Converter image</h2><p id="imageMessage" class="muted"></p><img id="converterImage" alt="Converter" class="hide" style="max-width:100%;max-height:65vh"><p><button id="closeImage" type="button" class="secondary">Close Image</button></p></div></div>
-<footer>Prices are not hedged. Confirm before sale.<br><a href="tel:+14694222777">(469) 422-2777</a></footer>
-<script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-const initialFragment = new URLSearchParams(location.hash.slice(1));
-let settingPassword = ['invite','recovery'].includes(initialFragment.get('type'));
-const supabase = createClient('https://mcykfvemgrdczytlbojm.supabase.co', 'sb_publishable_vI4r-0U6idwr6fLcsEF4iQ_cCtMyk5o', {auth:{storage:sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $ = id => document.getElementById(id);
-const show = id => {for(const name of ['login','setPassword','pending','app']) $(name).classList.toggle('hide',name!==id)};
-const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
-let account = null, cart = [], userProfile = null, lastActivity = Date.now();
-const LOGIN_TIMEOUT_MS = 30*60*1000;
-let imageAttempt = 0;
-const imagePaths = code => {const names=[code.trim(),code.replace(/[^a-z0-9]/gi,'')].filter(Boolean);return [...new Set(names)].flatMap(n=>['images/','Images/'].flatMap(dir=>['.jpg','.jpeg','.png','.webp','.JPG','.PNG'].map(ext=>dir+encodeURIComponent(n)+ext)))};
-function showImage(code){$('imageTitle').textContent=code;$('imageModal').classList.remove('hide');$('imageMessage').textContent='Loading image…';$('converterImage').classList.add('hide');const paths=imagePaths(code);imageAttempt++;const attempt=imageAttempt;let index=0;const next=()=>{if(attempt!==imageAttempt)return;if(index>=paths.length){$('imageMessage').textContent='No image found for this code.';return}const img=$('converterImage');img.onload=()=>{if(attempt!==imageAttempt)return;$('imageMessage').textContent='';img.classList.remove('hide')};img.onerror=()=>{index++;next()};img.src=paths[index]};next()}
-$('closeImage').onclick=()=>{imageAttempt++;$('imageModal').classList.add('hide');$('converterImage').removeAttribute('src')};
-function renderCart(){const box=$('cart');box.replaceChildren();let total=0;for(const [i,item] of cart.entries()){total+=item.price*item.qty;const row=document.createElement('div');row.className='cartrow row';const title=document.createElement('span');title.textContent=item.code+(item.model?' · '+item.model:'')+' · '+money(item.price);const qty=document.createElement('input');qty.type='number';qty.min='1';qty.max='999';qty.value=item.qty;qty.setAttribute('aria-label','Quantity for '+item.code);qty.onchange=()=>{item.qty=Math.max(1,Math.min(999,Number(qty.value)||1));renderCart()};const remove=document.createElement('button');remove.className='secondary';remove.textContent='Remove';remove.onclick=()=>{cart.splice(i,1);renderCart()};row.append(title,qty,remove);box.append(row)}$('total').textContent=cart.length?'Estimated total: '+money(total):'Your list is empty.'}
-function renderResults(data){const box=$('results');box.replaceChildren();for(const [i,entry] of data.entries()){const row=document.createElement('div');row.className='result'+(i===0&&entry.serial_code.replace(/[^a-z0-9]/gi,'').toUpperCase()===$('query').value.replace(/[^a-z0-9]/gi,'').toUpperCase()?' exact':'');const name=document.createElement('div');const code=document.createElement('strong');code.textContent=entry.serial_code;const model=document.createElement('div');model.className='muted';model.textContent=entry.model||'';name.append(code,model);const right=document.createElement('div');right.className='price';right.textContent=money(Number(entry.customer_price));const buttons=document.createElement('div');buttons.className='row';const view=document.createElement('button');view.textContent='View Image';view.className='secondary';view.style.margin='0';view.onclick=()=>showImage(entry.serial_code);const add=document.createElement('button');add.textContent='+ Add to Order';add.className='secondary';add.style.margin='0';add.onclick=()=>{const old=cart.find(x=>x.code===entry.serial_code);if(old)old.qty++;else cart.push({code:entry.serial_code,model:entry.model||'',price:Number(entry.customer_price),qty:1});renderCart()};buttons.append(view,add);row.append(name,right,buttons);box.append(row)}}
-async function loadSettings(){const {data,error}=await supabase.rpc('manual_pricing_settings');if(error){$('rateMessage').textContent=error.message;return}const s=data?.[0];if(!s)return;for(const [field,value] of [['ptAsk',s.platinum_ask],['pdAsk',s.palladium_ask],['rhAsk',s.rhodium_ask],['payout',s.payout_percent]])if(value!==null)$(field).value=value;$('rateStatus').textContent=(s.published?'Customers see manual rates.':'Customers see spreadsheet prices.')+(s.rates_entered_at?' Rates entered: '+new Date(s.rates_entered_at).toLocaleString()+'.':' No rates entered yet.')}
-async function refresh(){if(settingPassword){show('setPassword');return}const {data:{user}}=await supabase.auth.getUser();account=user;if(!user){show('login');document.body.classList.remove('signed-in');return}const {data,error}=await supabase.from('customer_profiles').select('active,manager_access,display_name,company').eq('id',user.id).single();userProfile=data;if(error){show('pending');document.body.classList.remove('signed-in');return}show(data?.active?'app':'pending');document.body.classList.toggle('signed-in',!!data?.active);$('welcome').textContent='Welcome, '+(data?.display_name||user.email||'customer')+(data?.company?' · '+data.company:'');$('manager').classList.toggle('hide',!data?.active||!data?.manager_access);if(data?.active&&data?.manager_access)loadSettings()}
-supabase.auth.onAuthStateChange((_event,_session)=>{setTimeout(refresh,0)});
-if(initialFragment.has('error_description')){$('loginMessage').textContent=initialFragment.get('error_description').replaceAll('+',' ')}
-refresh();
-$('loginForm').onsubmit=async e=>{e.preventDefault();$('loginButton').disabled=true;$('loginMessage').textContent='Signing in…';const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('password').value='';$('loginButton').disabled=false;$('loginMessage').textContent=error?error.message:'';if(!error){lastActivity=Date.now();refresh()}};
-$('passwordForm').onsubmit=async e=>{e.preventDefault();$('passwordMessage').textContent='Saving…';const {error}=await supabase.auth.updateUser({password:$('newPassword').value});$('newPassword').value='';$('passwordMessage').textContent=error?error.message:'';if(!error){settingPassword=false;history.replaceState(null,'',location.pathname+location.search);refresh()}};
-$('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){$('loginMessage').textContent='Enter your email first.';return}const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});$('loginMessage').textContent=error?error.message:'If that email has an account, a reset link has been sent.'};
-for(const button of document.querySelectorAll('.logout'))button.onclick=async()=>{cart=[];renderCart();await supabase.auth.signOut();show('login');document.body.classList.remove('signed-in')};
-for(const kind of ['pointerdown','keydown','touchstart'])document.addEventListener(kind,()=>{if(account&&userProfile?.active)lastActivity=Date.now()},{passive:true});
-async function checkIdle(){if(!account||!userProfile?.active||Date.now()-lastActivity<LOGIN_TIMEOUT_MS)return;cart=[];renderCart();await supabase.auth.signOut();show('login');document.body.classList.remove('signed-in');$('loginMessage').textContent='Signed out after 30 minutes of inactivity.'}
-setInterval(checkIdle,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkIdle()});window.addEventListener('focus',checkIdle);
-$('searchForm').onsubmit=async e=>{e.preventDefault();const q=$('query').value.trim();if(q.replace(/[^a-z0-9]/gi,'').length<3){$('searchMessage').textContent='Enter at least 3 letters or numbers.';return}$('searchButton').disabled=true;$('searchMessage').textContent='Searching…';$('results').replaceChildren();const {data,error}=await supabase.rpc('search_converter_prices',{query_text:q});$('searchButton').disabled=false;$('searchMessage').textContent=error?error.message:!data?.length?'No matching codes found.':data.length===30?'Showing the first 30 matches. Add more characters to narrow your search.':'';if(data)renderResults(data)};
-$('manualForm').onsubmit=e=>{e.preventDefault();const code=$('manualCode').value.trim().toUpperCase();const price=Number($('manualPrice').value);if(!code||!Number.isFinite(price)||price<0||price>1000000)return;const old=cart.find(x=>x.code===code&&x.manual);if(old)old.qty++;else cart.push({code,model:'Manual entry',price,qty:1,manual:true});renderCart();$('manualForm').reset()};
-$('ratesForm').onsubmit=async e=>{e.preventDefault();$('saveRates').disabled=true;$('rateMessage').textContent='Saving…';const {error}=await supabase.rpc('save_manual_pricing',{pt_ask:Number($('ptAsk').value),pd_ask:Number($('pdAsk').value),rh_ask:Number($('rhAsk').value),payout:Number($('payout').value)});$('saveRates').disabled=false;$('rateMessage').textContent=error?error.message:'Saved. Customers still see spreadsheet prices. Compare prices below.';if(!error)loadSettings()};
-$('previewForm').onsubmit=async e=>{e.preventDefault();$('rateMessage').textContent='Comparing…';const {data,error}=await supabase.rpc('preview_manual_price',{query_text:$('previewCode').value.trim()});$('rateMessage').textContent=error?error.message:!data?.length?'No matching code.':'';const box=$('previewResults');box.replaceChildren();if(data)for(const item of data){const row=document.createElement('p');row.textContent=item.serial_code+' · spreadsheet '+money(Number(item.old_price))+' · manual market '+money(Number(item.market_price));box.append(row)}};
-$('publishRates').onclick=async()=>{if(!confirm('Show manual Kitco-based prices to customers? Check your preview first.'))return;$('rateMessage').textContent='Updating…';const {error}=await supabase.rpc('publish_manual_pricing',{enable_market:true});$('rateMessage').textContent=error?error.message:'Customers now see manual-rate prices.';if(!error)loadSettings()};
-$('restorePrices').onclick=async()=>{$('rateMessage').textContent='Updating…';const {error}=await supabase.rpc('publish_manual_pricing',{enable_market:false});$('rateMessage').textContent=error?error.message:'Customers now see spreadsheet prices.';if(!error)loadSettings()};
-$('clear').onclick=()=>{if(cart.length&&confirm('Clear full order?')){cart=[];renderCart()}};$('print').onclick=()=>{if(cart.length)window.print()};$('copy').onclick=async()=>{if(!cart.length)return;const lines=['Niko Auto Core USA Order','','Code | Price | Qty | Line Total',...cart.map(x=>`${x.code} | ${money(x.price)} | ${x.qty} | ${money(x.price*x.qty)}`),'','Total: '+money(cart.reduce((sum,x)=>sum+x.price*x.qty,0)),'Prices are not hedged. Confirm before sale.'];const orderText=lines.join('\n');try{await navigator.clipboard.writeText(orderText);$('total').textContent='Order copied · '+money(cart.reduce((sum,x)=>sum+x.price*x.qty,0))}catch{window.prompt('Copy order:',orderText)}};renderCart();
+
+<script>
+let priceRows = [];
+let users = [];
+let currentResult = null;
+let orderItems = [];
+let loggedInUsername = "guest";
+let loginTimeout = null;
+let loginDeadline = 0;
+const LOGIN_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+let loggedInDiscount = 0;
+let exactPriceMap = new Map();
+let lastExcelSignature = "";
+let lastTypingAt = 0;
+let activeAppUser = null;
+
+function norm(v){return String(v||"").toUpperCase().replace(/[\s\-_./]/g,"");}
+
+function cleanPrice(v){
+  let s = String(v ?? "").trim();
+  if(!s) return "";
+  let n = Number(s.replace(/[$, ]/g,""));
+  if(Number.isFinite(n)) return "$" + Math.round(n).toLocaleString();
+  return s;
+}
+
+function customerPrice(v){
+  const base = Number(String(v ?? "").replace(/[$, ]/g,""));
+  if(!Number.isFinite(base)) return cleanPrice(v);
+
+  const discount = Math.max(
+    0,
+    Math.min(100, Number(loggedInDiscount) || 0)
+  );
+
+  return "$" + Math.round(
+    base * (1 - discount / 100)
+  ).toLocaleString();
+}
+
+function esc(v){
+  return String(v ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+
+async function loadUsers(){
+  const res = await fetch("users.json?cache=" + Date.now());
+  if(!res.ok) throw new Error("users.json not found");
+  users = await res.json();
+}
+
+function toggleAccessRequest(show){
+  const panel = document.getElementById("accessRequest");
+  panel.classList.toggle("hidden", !show);
+  document.getElementById("requestMessage").textContent = "";
+  if(show) setTimeout(() => document.getElementById("requestName").focus(), 50);
+}
+
+function sendAccessRequest(){
+  const name = document.getElementById("requestName").value.trim();
+  const company = document.getElementById("requestCompany").value.trim();
+  const email = document.getElementById("requestEmail").value.trim();
+  const phone = document.getElementById("requestPhone").value.trim();
+  const msg = document.getElementById("requestMessage");
+  if(!name || !company || !email){
+    msg.innerHTML = '<span class="error">Please enter your name, company and email.</span>';
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    msg.innerHTML = '<span class="error">Please enter a valid email address.</span>';
+    return;
+  }
+  const subject = "Niko Auto Core - Login Access Request";
+  const body = [
+    "Hello Niko Auto Core USA,", "",
+    "I would like to request login access to the Niko Auto Core price app.", "",
+    "Name: " + name,
+    "Company: " + company,
+    "Email: " + email,
+    "Phone: " + (phone || "Not provided"), "",
+    "Please send my login information to the email address above.", "", "Thank you."
+  ].join("\n");
+  msg.textContent = "Opening your email app...";
+  window.location.href = "mailto:nikoautocore2@gmail.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+}
+
+async function login(){
+  const msg = document.getElementById("loginMessage");
+  try{
+    if(!users.length) await loadUsers();
+  }catch(e){
+    msg.innerHTML = '<span class="error">Cannot load users.json.</span>';
+    return;
+  }
+
+  const username = document.getElementById("usernameInput").value.trim().toLowerCase();
+  const password = document.getElementById("passwordInput").value;
+
+  const user = users.find(u =>
+    String(u.username).toLowerCase() === username &&
+    String(u.password) === password
+  );
+
+  if(!user){
+    msg.innerHTML = '<span class="error">Wrong username or password.</span>';
+    return;
+  }
+
+  if(user.active === false){
+    msg.innerHTML = '<span class="error">This account is locked. Call Niko Auto Core USA.</span>';
+    return;
+  }
+
+  // Do not save login in browser. User must login again after closing/reopening.
+  showSearch(user);
+}
+
+function showSearch(user){
+  activeAppUser = user;
+  loggedInUsername = user.username || "guest";
+  loggedInDiscount = Number(user.priceDiscountPercent || 0);
+
+  document.body.classList.add("logged-in");
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("searchSection").classList.remove("hidden");
+  document.getElementById("welcome").textContent =
+    "Welcome, " + (user.name || user.username) + (user.company ? " - " + user.company : "");
+
+  // Manager access is controlled in users.json. Add role:"admin" or managerAccess:true only to Niko's user.
+  const canManage = user.managerAccess === true || String(user.role || "").toLowerCase() === "admin";
+  document.getElementById("managerLaunchBtn").style.display = canManage ? "block" : "none";
+
+  loadExcel();
+  loadOrder();
+  renderOrder();
+  startLoginTimer();
+}
+
+function startLoginTimer(){
+  if(loginTimeout) clearTimeout(loginTimeout);
+  loginDeadline = Date.now() + LOGIN_TIMEOUT_MS;
+  loginTimeout = setTimeout(checkLoginTimeout, LOGIN_TIMEOUT_MS);
+}
+
+function checkLoginTimeout(){
+  if(!document.body.classList.contains("logged-in")) return;
+  const remaining = loginDeadline - Date.now();
+  if(remaining <= 0){
+    logout();
+  }else{
+    if(loginTimeout) clearTimeout(loginTimeout);
+    loginTimeout = setTimeout(checkLoginTimeout, remaining);
+  }
+}
+
+function logout(){
+  if(loginTimeout) clearTimeout(loginTimeout);
+  loginTimeout = null;
+  loginDeadline = 0;
+  document.body.classList.remove("logged-in");
+  loggedInUsername = "guest";
+  loggedInDiscount = 0;
+  activeAppUser = null;
+  location.reload();
+}
+
+async function loadExcel(force = false){
+  if(priceRows.length && !force) return;
+  try{
+    const res = await fetch("NIKO_Master_PPM_Catalogue.xlsx?cache=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) throw new Error("Excel file not found.");
+
+    // If the server says the Excel file is unchanged, do not parse it again.
+    // Re-parsing a large XLSX on Android can briefly freeze keyboard input.
+    const etag = res.headers.get("etag") || "";
+    const modified = res.headers.get("last-modified") || "";
+    const length = res.headers.get("content-length") || "";
+    const signature = [etag, modified, length].filter(Boolean).join("|");
+    if(force && signature && signature === lastExcelSignature){
+      document.getElementById("status").textContent =
+        `Ready: ${priceRows.length.toLocaleString()} prices loaded.`;
+      return;
+    }
+
+    const ab = await res.arrayBuffer();
+    const wb = XLSX.read(ab, {type:"array", cellDates:false});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:""});
+
+    const nextRows = [];
+    const nextExactMap = new Map();
+    // Master catalogue headers are on Excel row 7; data begins on row 8.
+    for(let r = 7; r < rows.length; r++){
+      const row = rows[r] || [];
+      const code = String(row[0] ?? "").trim();   // Column A
+      const price = String(row[10] ?? "").trim(); // Column K: Live Value ($)
+      const ptOz = Number(String(row[7] ?? "").replace(/,/g,"")) || 0;  // Column H
+      const pdOz = Number(String(row[8] ?? "").replace(/,/g,"")) || 0;  // Column I
+      const rhOz = Number(String(row[9] ?? "").replace(/,/g,"")) || 0;  // Column J
+      if(code && price && code.toLowerCase() !== "serial code"){
+        const normCode = norm(code);
+        const item = {code, price, normCode, ptOz, pdOz, rhOz};
+        nextRows.push(item);
+        if(!nextExactMap.has(normCode)) nextExactMap.set(normCode, item);
+      }
+    }
+
+    priceRows = nextRows;
+    exactPriceMap = nextExactMap;
+    if(signature) lastExcelSignature = signature;
+    renderBusinessManager();
+
+    document.getElementById("status").textContent =
+      `Ready: ${priceRows.length.toLocaleString()} prices loaded.`;
+  }catch(e){
+    document.getElementById("status").textContent =
+      "Could not load NIKO_Master_PPM_Catalogue.xlsx. Make sure file name is exact.";
+    document.getElementById("result").innerHTML = `<span class="small">${e.message}</span>`;
+  }
+}
+
+function searchCode(){
+  const raw = document.getElementById("searchInput").value.trim();
+  const q = norm(raw);
+  const result = document.getElementById("result");
+
+  currentResult = null;
+  document.getElementById("addOrderBtn").classList.add("hidden");
+  if(!q){ result.innerHTML = "Enter converter code."; return; }
+  if(!priceRows.length){ result.innerHTML = "Price list not loaded yet."; return; }
+
+  const exact = exactPriceMap.get(q);
+  if(exact){
+    const shownPrice = customerPrice(exact.price);
+    currentResult = {code: exact.code, price: shownPrice};
+    document.getElementById("addOrderBtn").classList.remove("hidden");
+    result.innerHTML =
+      `<div class="exact-code">${esc(exact.code)}</div>
+       <div class="price">${shownPrice}</div>
+       <div class="exact-actions"><button class="image-btn" onclick='showConverterImage(${JSON.stringify(exact.code)})'>View Image</button></div>
+       <p class="status">Current customer price</p>`;
+    return;
+  }
+
+  const sim = [];
+  for(const x of priceRows){
+    if(x.normCode.includes(q)){
+      sim.push(x);
+      if(sim.length >= 12) break;
+    }
+  }
+  if(sim.length){
+    window.nikoSimilar = sim.map(x => ({
+      code:x.code,
+      price:customerPrice(x.price)
+    }));
+    result.innerHTML =
+      `<div class="code">No exact match. Similar:</div>` +
+      window.nikoSimilar.map((x,i) =>
+        `<div class="similar-row">
+          <div class="similar-main"><span class="similar-code">${esc(x.code)}</span><span class="similar-price">${esc(x.price)}</span></div>
+          <div class="similar-buttons"><button class="image-btn" onclick="showSimilarImage(${i})">View Image</button><button class="similar-add" onclick="addSimilarToOrder(${i})">+ Add</button></div>
+        </div>`
+      ).join("");
+    return;
+  }
+
+  result.innerHTML = `No match for <b>${raw}</b><br><span class="small">Call Niko Auto Core USA for manual check.</span>`;
+}
+
+function imageCandidates(code){
+  const raw = String(code || "").trim();
+  const normalized = norm(raw);
+  const compact = raw.replace(/\s+/g, "");
+  const safeRaw = encodeURIComponent(raw);
+  const safeCompact = encodeURIComponent(compact);
+  const safeNorm = encodeURIComponent(normalized);
+  const names = [...new Set([safeRaw, safeCompact, safeNorm])];
+  const folders = ["images/", "Images/", "image/", ""];
+  const exts = [".jpg", ".jpeg", ".png", ".webp", ".JPG", ".PNG"];
+  const list = [];
+  folders.forEach(folder => names.forEach(name => exts.forEach(ext => list.push(folder + name + ext))));
+  return list;
+}
+
+function showSimilarImage(i){
+  const item = (window.nikoSimilar || [])[i];
+  if(item) showConverterImage(item.code);
+}
+
+function showConverterImage(code){
+  const modal = document.getElementById("imageModal");
+  const img = document.getElementById("converterImage");
+  const msg = document.getElementById("imageMessage");
+  document.getElementById("imageTitle").textContent = String(code || "Converter Image");
+  modal.classList.remove("hidden");
+  img.classList.add("hidden");
+  img.removeAttribute("src");
+  msg.classList.remove("hidden");
+  msg.textContent = "Loading image...";
+  const candidates = imageCandidates(code);
+  let index = 0;
+  const tryNext = () => {
+    if(index >= candidates.length){
+      img.classList.add("hidden");
+      msg.classList.remove("hidden");
+      msg.textContent = "No image found for this serial.";
+      return;
+    }
+    img.onload = () => {
+      msg.classList.add("hidden");
+      img.classList.remove("hidden");
+    };
+    img.onerror = () => { index++; tryNext(); };
+    img.src = candidates[index] + "?cache=" + Date.now();
+  };
+  tryNext();
+}
+
+function closeImageModal(event){
+  if(event && event.target && event.target.id !== "imageModal") return;
+  const modal = document.getElementById("imageModal");
+  const img = document.getElementById("converterImage");
+  modal.classList.add("hidden");
+  img.removeAttribute("src");
+}
+
+function addSimilarToOrder(i){
+  const item = (window.nikoSimilar || [])[i];
+  if(!item) return;
+  addItemToOrder(item.code, item.price);
+}
+
+function priceNumber(v){
+  const n = Number(String(v||"0").replace(/[$, ]/g,""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function money(n){return "$" + Math.round(Number(n)||0).toLocaleString();}
+
+function orderKey(){
+  return "niko_order_" + (loggedInUsername || "guest");
+}
+
+function loadOrder(){
+  try{ orderItems = JSON.parse(localStorage.getItem(orderKey()) || "[]"); }
+  catch(e){ orderItems = []; }
+}
+
+function saveOrder(){ localStorage.setItem(orderKey(), JSON.stringify(orderItems)); }
+
+function addItemToOrder(code, price){
+  code = String(code || "").trim().toUpperCase();
+  price = cleanPrice(price);
+  if(!code || priceNumber(price) <= 0){ alert("Enter code and price first."); return; }
+  const found = orderItems.find(x => norm(x.code) === norm(code));
+  if(found){ found.qty = Number(found.qty || 1) + 1; found.price = price; }
+  else{ orderItems.push({code, price, qty: 1}); }
+  saveOrder();
+  renderOrder();
+}
+
+function addCurrentToOrder(){
+  if(!currentResult) return;
+  addItemToOrder(currentResult.code, currentResult.price);
+}
+
+function addManualToOrder(){
+  const codeEl = document.getElementById("manualCodeInput");
+  const priceEl = document.getElementById("manualPriceInput");
+  addItemToOrder(codeEl.value, priceEl.value);
+  codeEl.value = "";
+  priceEl.value = "";
+  codeEl.focus();
+}
+
+function updateQty(i, value){
+  const q = Math.max(1, Math.round(Number(value)||1));
+  if(orderItems[i]) orderItems[i].qty = q;
+  saveOrder(); renderOrder();
+}
+
+function removeOrderItem(i){
+  orderItems.splice(i,1);
+  saveOrder(); renderOrder();
+}
+
+function clearOrder(){
+  if(!orderItems.length) return;
+  if(confirm("Clear full order?")){
+    orderItems = [];
+    saveOrder(); renderOrder();
+  }
+}
+
+function renderOrder(){
+  const list = document.getElementById("orderList");
+  const count = document.getElementById("orderCount");
+  const totalEl = document.getElementById("orderTotal");
+  if(!list || !count || !totalEl) return;
+  const pieces = orderItems.reduce((a,x)=>a+(Number(x.qty)||1),0);
+  count.textContent = pieces + (pieces===1 ? " item" : " items");
+  if(!orderItems.length){
+    list.innerHTML = "No items added yet.";
+    totalEl.textContent = "Total: $0";
+    return;
+  }
+  let total = 0;
+  list.innerHTML = `<table class="order-table"><thead><tr><th>Code</th><th>Price</th><th>Qty</th><th>Line Total</th><th></th></tr></thead><tbody>` +
+    orderItems.map((x,i)=>{
+      const unit = priceNumber(x.price);
+      const qty = Number(x.qty)||1;
+      const line = unit * qty;
+      total += line;
+      return `<tr><td><b>${x.code}</b></td><td>${money(unit)}</td><td><input class="qtybox" type="number" min="1" value="${qty}" onchange="updateQty(${i}, this.value)"></td><td><b>${money(line)}</b></td><td><button class="remove-btn" onclick="removeOrderItem(${i})">Remove</button></td></tr>`;
+    }).join("") + `</tbody></table>`;
+  totalEl.textContent = "Total: " + money(total);
+}
+
+function orderText(){
+  let total = 0;
+  let lines = ["Niko Auto Core USA Order", "Phone: (469) 422-2777", "", "Code | Price | Qty | Line Total"];
+  orderItems.forEach(x=>{
+    const unit = priceNumber(x.price), qty = Number(x.qty)||1, line = unit*qty;
+    total += line;
+    lines.push(`${x.code} | ${money(unit)} | ${qty} | ${money(line)}`);
+  });
+  lines.push("", "Total: " + money(total), "Prices are not hedged. Confirm before sale.");
+  return lines.join("\n");
+}
+
+function printOrder(){
+  if(!orderItems.length){ alert("No order items yet."); return; }
+  window.print();
+}
+
+async function copyOrderText(){
+  if(!orderItems.length){ alert("No order items yet."); return; }
+  const text = orderText();
+  try{ await navigator.clipboard.writeText(text); alert("Order copied."); }
+  catch(e){ prompt("Copy order:", text); }
+}
+
+// ---------------- NIKO BUSINESS MANAGER ----------------
+const BM_KEY = "niko_business_manager_v1";
+let bmData = loadBusinessData();
+
+function loadBusinessData(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(BM_KEY) || "null");
+    if(saved && Array.isArray(saved.customers) && Array.isArray(saved.purchases) && Array.isArray(saved.shipments)) return saved;
+  }catch(e){}
+  return {customers:[], purchases:[], shipments:[]};
+}
+
+function saveBusinessData(){
+  localStorage.setItem(BM_KEY, JSON.stringify(bmData));
+  renderBusinessManager();
+}
+
+function bmMoney(n){
+  return Number(n || 0).toLocaleString("en-US", {style:"currency", currency:"USD", maximumFractionDigits:0});
+}
+
+function bmToday(){ return new Date().toISOString().slice(0,10); }
+function bmCustomerName(id){ return bmData.customers.find(c => c.id === id)?.name || "Unknown"; }
+
+function updateManagerSerialSearch(){
+  const serialEl = document.getElementById("bmPSerial");
+  const listEl = document.getElementById("bmSerialSuggestions");
+  const q = norm(serialEl.value);
+  if(!q){ listEl.innerHTML = ""; return; }
+  const matches = [];
+  for(const item of priceRows){
+    if(item.normCode.includes(q)){
+      matches.push(item);
+      if(matches.length >= 20) break;
+    }
+  }
+  listEl.innerHTML = matches.map(x => `<option value="${esc(x.code)}">${esc(cleanPrice(x.price))}</option>`).join("");
+  calculateManagerPurchase();
+}
+
+function calculateManagerPurchase(){
+  const serial = document.getElementById("bmPSerial").value;
+  const item = exactPriceMap.get(norm(serial));
+  if(!item){
+    document.getElementById("bmPPtOz").value = "";
+    document.getElementById("bmPPdOz").value = "";
+    document.getElementById("bmPRhOz").value = "";
+    return;
+  }
+  const qty = Math.max(1, Number(document.getElementById("bmPQty").value) || 1);
+  const liveUnitPrice = priceNumber(item.price);
+  const estimated = Math.round(liveUnitPrice * qty);
+  const customerId = Number(document.getElementById("bmPCustomer").value);
+  const customer = bmData.customers.find(c => c.id === customerId);
+  const discount = Math.max(0, Math.min(100, Number(customer?.discount || 0)));
+  document.getElementById("bmPValue").value = estimated;
+  document.getElementById("bmPCost").value = Math.round(estimated * (1 - discount / 100));
+  document.getElementById("bmPPtOz").value = (Number(item.ptOz || 0) * qty).toFixed(4);
+  document.getElementById("bmPPdOz").value = (Number(item.pdOz || 0) * qty).toFixed(4);
+  document.getElementById("bmPRhOz").value = (Number(item.rhOz || 0) * qty).toFixed(4);
+}
+
+function marketInputs(){
+  const ids = ["bmMarketPt","bmMarketPd","bmMarketRh","bmMarketRecovery","bmMarketMerge"];
+  const values = ids.map(id => Number(document.getElementById(id).value));
+  if(ids.slice(0,3).some(id => document.getElementById(id).value.trim() === "") ||
+     values.some(v => !Number.isFinite(v)) || values.slice(0,3).some(v => v < 0) ||
+     values.slice(0,3).every(v => v === 0) || values[3] < 0 || values[3] > 100 ||
+     values[4] < 0 || values[4] > 200){
+    throw new Error("Enter valid market prices, recovery (0–100%), and merge (0–200%).");
+  }
+  return values;
+}
+
+function marketValue(ptOz,pdOz,rhOz,values){
+  return Math.round((ptOz*values[0] + pdOz*values[1] + rhOz*values[2]) * values[3]/100 * values[4]/100);
+}
+
+function previewMarket(){
+  const output = document.getElementById("bmMarketPreview");
+  try{
+    const values = marketInputs();
+    const item = exactPriceMap.get(norm(document.getElementById("bmMarketCode").value));
+    if(!item){ output.textContent = "Enter an exact serial from the loaded catalogue to preview."; return; }
+    if(!(item.ptOz || item.pdOz || item.rhOz)){ output.textContent = item.code + ": no ounce data; existing price will be retained."; return; }
+    output.textContent = item.code + " — existing " + cleanPrice(item.price) + ", new " + cleanPrice(marketValue(item.ptOz,item.pdOz,item.rhOz,values));
+  }catch(e){ output.textContent = e.message; }
+}
+
+async function downloadMarketWorkbook(){
+  const output = document.getElementById("bmMarketPreview");
+  try{
+    const values = marketInputs();
+    if(!priceRows.length) throw new Error("Wait until the catalogue finishes loading.");
+    output.textContent = "Preparing catalogue...";
+    const response = await fetch("NIKO_Master_PPM_Catalogue.xlsx?download=" + Date.now(), {cache:"no-store"});
+    if(!response.ok) throw new Error("Could not fetch the master catalogue.");
+    const workbook = XLSX.read(await response.arrayBuffer(), {type:"array"});
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const range = XLSX.utils.decode_range(sheet["!ref"]);
+    let changed = 0, retained = 0;
+    // Excel row 8 onward. H/I/J hold total ounces; K holds the public value.
+    for(let row = 7; row <= range.e.r; row++){
+      const cell = col => sheet[XLSX.utils.encode_cell({r:row,c:col})];
+      const code = String(cell(0)?.v ?? "").trim();
+      if(!code || code.toLowerCase() === "serial code") continue;
+      const oz = [7,8,9].map(col => Number(String(cell(col)?.v ?? 0).replace(/,/g,"")) || 0);
+      if(!oz.some(v => v > 0)){ retained++; continue; }
+      sheet[XLSX.utils.encode_cell({r:row,c:10})] = {t:"n",v:marketValue(...oz,values),z:'"$"#,##0'};
+      changed++;
+    }
+    if(!changed) throw new Error("No rows have ounce data; no file was made.");
+    const bytes = XLSX.write(workbook,{bookType:"xlsx",type:"array"});
+    const url = URL.createObjectURL(new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+    const link = document.createElement("a");
+    link.href = url; link.download = "NIKO_Master_PPM_Catalogue.xlsx";
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    output.textContent = "Downloaded: " + changed.toLocaleString() + " values updated; " + retained.toLocaleString() + " rows without ounce data kept their existing value. Upload the file to GitHub to publish.";
+  }catch(e){ output.textContent = e.message; }
+}
+
+function openBusinessManager(){
+  const canManage = activeAppUser && (activeAppUser.managerAccess === true || String(activeAppUser.role || "").toLowerCase() === "admin");
+  if(!canManage){ alert("Manager access is not enabled for this account."); return; }
+  document.getElementById("searchSection").classList.add("hidden");
+  document.querySelector(".site-head").style.display = "none";
+  document.getElementById("managerScreen").classList.add("active");
+  renderBusinessManager();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function closeBusinessManager(){
+  hideManagerForms();
+  document.getElementById("managerScreen").classList.remove("active");
+  document.getElementById("searchSection").classList.remove("hidden");
+  document.querySelector(".site-head").style.display = "block";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function switchManagerPage(btn){
+  document.querySelectorAll(".manager-tab,.manager-page").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(btn.dataset.managerPage).classList.add("active");
+  hideManagerForms();
+}
+
+function managerGoTo(pageId){
+  const btn = document.querySelector(`[data-manager-page="${pageId}"]`);
+  if(btn) switchManagerPage(btn);
+}
+
+function showManagerForm(type){
+  const pages = {purchase:"managerPurchases", customer:"managerCustomers", shipment:"managerShipments"};
+  managerGoTo(pages[type]);
+  hideManagerForms();
+  const card = document.getElementById("bm" + type[0].toUpperCase() + type.slice(1) + "FormCard");
+  if(card) card.classList.add("open");
+  if(type === "purchase") document.getElementById("bmPDate").value = bmToday();
+  if(type === "shipment") document.getElementById("bmSDate").value = bmToday();
+}
+
+function hideManagerForms(){
+  document.querySelectorAll(".manager-form-card").forEach(x => x.classList.remove("open"));
+}
+
+function bmPurchaseRows(items, withActions){
+  if(!items.length) return `<tr><td class="manager-empty" colspan="${withActions ? 11 : 6}">No purchases yet</td></tr>`;
+  return items.map(p => {
+    const pt = bmPurchasePgm(p,"ptOz");
+    const pd = bmPurchasePgm(p,"pdOz");
+    const rh = bmPurchasePgm(p,"rhOz");
+    return `<tr><td>${esc(p.date)}</td><td>${esc(bmCustomerName(p.customerId))}</td><td><b class="gold">${esc(p.serial)}</b></td>${withActions ? `<td>${p.qty}</td><td>${pt.toFixed(4)}</td><td>${pd.toFixed(4)}</td><td>${rh.toFixed(4)}</td>` : ""}<td>${bmMoney(p.cost)}</td><td>${bmMoney(p.value)}</td><td style="color:var(--green)">${bmMoney(Number(p.value)-Number(p.cost))}</td>${withActions ? `<td><button class="manager-delete" onclick="deleteBusinessItem('purchases',${p.id})">Delete</button></td>` : ""}</tr>`;
+  }).join("");
+}
+
+function bmPurchasePgm(p, field){
+  const item = exactPriceMap.get(norm(p.serial));
+  const qty = Math.max(1, Number(p.qty || 1));
+  if(item) return Number(item[field] || 0) * qty;
+  return Number(p[field] || 0);
+}
+
+function renderBusinessManager(){
+  const cost = bmData.purchases.reduce((s,p) => s + Number(p.cost || 0), 0);
+  const value = bmData.purchases.reduce((s,p) => s + Number(p.value || 0), 0);
+  const qty = bmData.purchases.reduce((s,p) => s + Number(p.qty || 0), 0);
+  const ptOz = bmData.purchases.reduce((s,p) => s + bmPurchasePgm(p,"ptOz"), 0);
+  const pdOz = bmData.purchases.reduce((s,p) => s + bmPurchasePgm(p,"pdOz"), 0);
+  const rhOz = bmData.purchases.reduce((s,p) => s + bmPurchasePgm(p,"rhOz"), 0);
+  document.getElementById("bmCost").textContent = bmMoney(cost);
+  document.getElementById("bmValue").textContent = bmMoney(value);
+  document.getElementById("bmProfit").textContent = bmMoney(value-cost);
+  document.getElementById("bmStock").textContent = qty.toLocaleString();
+  document.getElementById("bmPtOz").textContent = ptOz.toFixed(4) + " oz";
+  document.getElementById("bmPdOz").textContent = pdOz.toFixed(4) + " oz";
+  document.getElementById("bmRhOz").textContent = rhOz.toFixed(4) + " oz";
+  document.getElementById("bmRecentRows").innerHTML = bmPurchaseRows(bmData.purchases.slice(0,5), false);
+  document.getElementById("bmPurchaseRows").innerHTML = bmPurchaseRows(bmData.purchases, true);
+  document.getElementById("bmPCustomer").innerHTML = bmData.customers.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  document.getElementById("bmCustomerRows").innerHTML = bmData.customers.length ? bmData.customers.map(c => {
+    const purchases = bmData.purchases.filter(p => p.customerId === c.id);
+    const paid = purchases.reduce((s,p) => s + Number(p.cost || 0), 0);
+    return `<tr><td><b>${esc(c.name)}</b></td><td>${esc(c.phone || "-")}</td><td>${esc(c.company || "-")}</td><td><input class="qtybox" type="number" min="0" max="100" step=".1" value="${Number(c.discount || 0)}" onchange="updateBusinessCustomerDiscount(${c.id},this.value)">%</td><td>${purchases.length}</td><td>${bmMoney(paid)}</td><td><button class="manager-delete" onclick="deleteBusinessCustomer(${c.id})">Delete</button></td></tr>`;
+  }).join("") : '<tr><td class="manager-empty" colspan="7">No customers yet</td></tr>';
+  document.getElementById("bmShipmentRows").innerHTML = bmData.shipments.length ? bmData.shipments.map(s => `<tr><td>${esc(s.date)}</td><td><b>${esc(s.name)}</b></td><td>${esc(s.refinery)}</td><td>${Number(s.weight || 0).toLocaleString()} lb</td><td>${bmMoney(s.expected)}</td><td>${bmMoney(s.received)}</td><td>${esc(s.status)}</td><td><button class="manager-delete" onclick="deleteBusinessItem('shipments',${s.id})">Delete</button></td></tr>`).join("") : '<tr><td class="manager-empty" colspan="8">No shipments yet</td></tr>';
+}
+
+function deleteBusinessItem(type,id){
+  if(confirm("Delete this business record?")){
+    bmData[type] = bmData[type].filter(x => x.id !== id);
+    saveBusinessData();
+  }
+}
+
+function deleteBusinessCustomer(id){
+  if(bmData.purchases.some(p => p.customerId === id)){ alert("This customer has purchases and cannot be deleted yet."); return; }
+  deleteBusinessItem("customers", id);
+}
+
+function updateBusinessCustomerDiscount(id,value){
+  const customer = bmData.customers.find(c => c.id === id);
+  if(!customer) return;
+  customer.discount = Math.max(0, Math.min(100, Number(value) || 0));
+  saveBusinessData();
+}
+
+document.getElementById("bmPurchaseForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if(!bmData.customers.length){ alert("Add a customer first."); managerGoTo("managerCustomers"); showManagerForm("customer"); return; }
+  bmData.purchases.unshift({id:Date.now(), date:document.getElementById("bmPDate").value, customerId:Number(document.getElementById("bmPCustomer").value), serial:document.getElementById("bmPSerial").value.trim().toUpperCase(), qty:Number(document.getElementById("bmPQty").value), cost:Number(document.getElementById("bmPCost").value), value:Number(document.getElementById("bmPValue").value), weight:Number(document.getElementById("bmPWeight").value), ptOz:Number(document.getElementById("bmPPtOz").value || 0), pdOz:Number(document.getElementById("bmPPdOz").value || 0), rhOz:Number(document.getElementById("bmPRhOz").value || 0), notes:document.getElementById("bmPNotes").value.trim()});
+  e.target.reset(); hideManagerForms(); saveBusinessData();
+});
+
+document.getElementById("bmCustomerForm").addEventListener("submit", e => {
+  e.preventDefault();
+  bmData.customers.push({id:Date.now(), name:document.getElementById("bmCName").value.trim(), phone:document.getElementById("bmCPhone").value.trim(), company:document.getElementById("bmCCompany").value.trim(), discount:Number(document.getElementById("bmCDiscount").value || 0), notes:document.getElementById("bmCNotes").value.trim()});
+  e.target.reset(); hideManagerForms(); saveBusinessData();
+});
+
+document.getElementById("bmShipmentForm").addEventListener("submit", e => {
+  e.preventDefault();
+  bmData.shipments.unshift({id:Date.now(), date:document.getElementById("bmSDate").value, name:document.getElementById("bmSName").value.trim(), refinery:document.getElementById("bmSRefinery").value.trim(), weight:Number(document.getElementById("bmSWeight").value), expected:Number(document.getElementById("bmSExpected").value), received:Number(document.getElementById("bmSReceived").value), status:document.getElementById("bmSStatus").value});
+  e.target.reset(); hideManagerForms(); saveBusinessData();
+});
+
+document.getElementById("bmPSerial").addEventListener("input", updateManagerSerialSearch);
+document.getElementById("bmPSerial").addEventListener("change", calculateManagerPurchase);
+document.getElementById("bmPQty").addEventListener("input", calculateManagerPurchase);
+document.getElementById("bmPCustomer").addEventListener("change", calculateManagerPurchase);
+document.querySelectorAll("#managerMarket input").forEach(input => input.addEventListener("input", previewMarket));
+
+renderBusinessManager();
+
+document.getElementById("passwordInput").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
+document.getElementById("usernameInput").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
+document.getElementById("searchInput").addEventListener("keydown", e => { if(e.key === "Enter") searchCode(); });
+document.getElementById("manualCodeInput").addEventListener("keydown", e => { if(e.key === "Enter") addManualToOrder(); });
+document.getElementById("manualPriceInput").addEventListener("keydown", e => { if(e.key === "Enter") addManualToOrder(); });
+
+// Track active typing so the 60-second price refresh never interrupts the keyboard.
+["searchInput","manualCodeInput","manualPriceInput","usernameInput","passwordInput"].forEach(id => {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener("input", () => { lastTypingAt = Date.now(); }, {passive:true});
+  el.addEventListener("keydown", () => { lastTypingAt = Date.now(); }, {passive:true});
+});
+
+async function refreshLivePricesWhenIdle(){
+  if(!document.body.classList.contains("logged-in")) return;
+  if(Date.now() - lastTypingAt < 5000) return;
+  await loadExcel(true);
+}
+
+// Check live prices every 60 seconds, but only when the customer is not actively typing.
+setInterval(() => {
+  if("requestIdleCallback" in window){
+    requestIdleCallback(() => refreshLivePricesWhenIdle(), {timeout:5000});
+  }else{
+    setTimeout(() => refreshLivePricesWhenIdle(), 250);
+  }
+}, 60000);
+
+// When the app returns from the background, enforce the 30-minute login limit
+// and refresh live prices after the screen is idle.
+document.addEventListener("visibilitychange", () => {
+  if(!document.hidden && document.body.classList.contains("logged-in")){
+    checkLoginTimeout();
+    setTimeout(() => refreshLivePricesWhenIdle(), 750);
+  }
+});
+
+// Android/WebView can pause JavaScript timers while the app is in the background.
+// These checks make sure an expired login is closed as soon as the app is active again.
+window.addEventListener("focus", checkLoginTimeout);
+setInterval(checkLoginTimeout, 60000);
+
+// Login is not saved in browser in this version. Every new browser open requires login.
 </script>
 </body>
 </html>
