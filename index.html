@@ -135,6 +135,7 @@ footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weig
       <label>Rh PPM column<input id="mapRh" placeholder="optional"></label>
     </div>
     <button onclick="importOwnerFile()">Import Spreadsheet</button>
+    <button class="btn-secondary" onclick="backupOwnerFile()">Save Private Excel Backup Only</button>
     <p id="importMessage" class="status"></p>
     <button class="btn-secondary" onclick="closeOwnerPrices()">← Price App</button>
   </section>
@@ -365,8 +366,31 @@ async function importOwnerFile(){
    const {data,error}=await db.rpc("niko_import_catalog",{p_rows:prepared.slice(i,i+200)});
    if(error)throw error;count+=Number(data)||0;msg.textContent=`Imported ${Math.min(i+200,prepared.length)} of ${prepared.length}...`;
   }
-  await loadExcel(true);msg.textContent=`Done: ${count} rows imported or updated. Check sample serials before sharing.`;
+  await loadExcel(true);
+  msg.textContent=`${count} rows imported or updated. Saving private Excel backup...`;
+  try {
+    await savePrivateBackup(file);
+    msg.textContent=`Done: ${count} rows imported or updated; original Excel saved privately. Check sample serials before sharing.`;
+  } catch(backupError) {
+    msg.textContent=`${count} rows imported or updated. Private backup failed: ${backupError.message}. Run niko_private_storage.sql, then use Save Private Excel Backup Only.`;
+  }
  }catch(e){msg.textContent="Import stopped: "+e.message;}
+}
+async function savePrivateBackup(file){
+ if(!isOwner || !db) throw Error("Owner access required.");
+ if(!file || !/\.(xlsx|xls)$/i.test(file.name)) throw Error("Choose an Excel workbook.");
+ const cleanName=file.name.replace(/[^A-Za-z0-9._-]/g,"_");
+ const name=`catalogue-${new Date().toISOString().replace(/[:.]/g,"-")}-${crypto.randomUUID()}-${cleanName}`;
+ const {error}=await db.storage.from("niko-private-catalogues").upload(name,file,{upsert:false,contentType:file.type||"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+ if(error) throw error;
+}
+async function backupOwnerFile(){
+ const msg=document.getElementById("importMessage");
+ const file=document.getElementById("ownerFile").files[0];
+ if(!file){msg.textContent="Choose an Excel file first.";return;}
+ msg.textContent="Uploading original workbook privately...";
+ try{await savePrivateBackup(file);msg.textContent="Private Excel backup saved. The converter prices still require Import Spreadsheet.";}
+ catch(e){msg.textContent="Private backup failed: "+e.message;}
 }
 
 function searchCode(){
