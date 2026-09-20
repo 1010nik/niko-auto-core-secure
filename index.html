@@ -207,7 +207,7 @@ let orderItems = [];
 let loggedInUsername = "guest";
 let loginTimeout = null;
 let loginDeadline = 0;
-const LOGIN_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+const LOGIN_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 let loggedInDiscount = 0;
 let isOwner = false;
 const SUPABASE_URL = "https://mcykfvemgrdczytlbojm.supabase.co";
@@ -560,20 +560,11 @@ function removeOrderItem(i){
 }
 
 function clearOrder(){
-  if(!orderItems.length){
-    alert("Order is already empty.");
-    return;
+  if(!orderItems.length) return;
+  if(confirm("Clear full order?")){
+    orderItems = [];
+    saveOrder(); renderOrder();
   }
-
-  if(!window.confirm("Clear full order?")) return;
-
-  orderItems = [];
-  try{
-    localStorage.removeItem(orderKey());
-  }catch(e){
-    saveOrder();
-  }
-  renderOrder();
 }
 
 function renderOrder(){
