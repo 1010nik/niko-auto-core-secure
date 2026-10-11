@@ -155,8 +155,11 @@ footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weig
         <div class="manager-stat"><span>Expected Value</span><strong id="bmValue">$0</strong></div>
         <div class="manager-stat"><span>Expected Profit</span><strong id="bmProfit" style="color:var(--green)">$0</strong></div>
         <div class="manager-stat"><span>Converters in Stock</span><strong id="bmStock" class="gold">0</strong></div>
+        <div class="manager-stat"><span>Total Pt (troy oz)</span><strong id="bmPtOz">—</strong></div>
+        <div class="manager-stat"><span>Total Pd (troy oz)</span><strong id="bmPdOz">—</strong></div>
+        <div class="manager-stat"><span>Total Rh (troy oz)</span><strong id="bmRhOz">—</strong></div>
       </div>
-      <div class="manager-section"><div class="manager-section-head"><h2>Recent Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Paid</th><th>Value</th><th>Profit</th></tr></thead><tbody id="bmRecentRows"></tbody></table></div></div>
+      <p id="bmMetalStatus" class="status"></p><div class="manager-section"><div class="manager-section-head"><h2>Recent Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Paid</th><th>Value</th><th>Profit</th><th>Qty</th><th>Pt oz / unit</th><th>Pd oz / unit</th><th>Rh oz / unit</th><th>Pt oz total</th><th>Pd oz total</th><th>Rh oz total</th></tr></thead><tbody id="bmRecentRows"></tbody></table></div></div>
     </div>
 
     <div id="managerPurchases" class="manager-page">
@@ -165,9 +168,9 @@ footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weig
         <div class="manager-field"><label>Converter Serial — type to search live prices</label><input id="bmPSerial" list="bmSerialSuggestions" autocomplete="off" required><datalist id="bmSerialSuggestions"></datalist></div><div class="manager-field"><label>Quantity</label><input id="bmPQty" type="number" min="1" value="1" required></div>
         <div class="manager-field"><label>Total Paid ($)</label><input id="bmPCost" type="number" min="0" step=".01" required></div><div class="manager-field"><label>Estimated Value ($)</label><input id="bmPValue" type="number" min="0" step=".01" required></div>
         <div class="manager-field"><label>Weight (grams)</label><input id="bmPWeight" type="number" min="0"></div><div class="manager-field"><label>Notes</label><input id="bmPNotes"></div>
-        <div class="manager-form-actions"><button type="button" class="manager-cancel" onclick="hideManagerForms()">Cancel</button><button>Save Purchase</button></div>
+        <p id="bmPurchaseMetals" class="status" style="grid-column:1/-1">Select a serial to see estimated metal ounces.</p><div class="manager-form-actions"><button type="button" class="manager-cancel" onclick="hideManagerForms()">Cancel</button><button>Save Purchase</button></div>
       </form></div>
-      <div class="manager-section"><div class="manager-section-head"><h2>Converter Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Qty</th><th>Paid</th><th>Value</th><th>Profit</th><th></th></tr></thead><tbody id="bmPurchaseRows"></tbody></table></div></div>
+      <div class="manager-section"><div class="manager-section-head"><h2>Converter Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Qty</th><th>Paid</th><th>Value</th><th>Profit</th><th>Pt oz / unit</th><th>Pd oz / unit</th><th>Rh oz / unit</th><th>Pt oz total</th><th>Pd oz total</th><th>Rh oz total</th><th></th></tr></thead><tbody id="bmPurchaseRows"></tbody></table></div></div>
     </div>
 
     <div id="managerCustomers" class="manager-page">
@@ -645,7 +648,7 @@ function updateManagerSerialSearch(){
   const serialEl = document.getElementById("bmPSerial");
   const listEl = document.getElementById("bmSerialSuggestions");
   const q = norm(serialEl.value);
-  if(!q){ listEl.innerHTML = ""; return; }
+  if(!q){ listEl.innerHTML = ""; renderPurchaseMetalPreview(); return; }
   const matches = [];
   for(const item of priceRows){
     if(item.normCode.includes(q)){
@@ -658,6 +661,7 @@ function updateManagerSerialSearch(){
 }
 
 function calculateManagerPurchase(){
+  renderPurchaseMetalPreview();
   const serial = document.getElementById("bmPSerial").value;
   const item = exactPriceMap.get(norm(serial));
   if(!item) return;
@@ -680,6 +684,7 @@ async function openBusinessManager(){
   const {data,error}=await db.rpc("niko_manager_data");
   if(error){alert("Manager load failed: "+error.message);return;}
   bmData=data || {customers:[],purchases:[],shipments:[]};
+  await loadManagerMetals();
   renderBusinessManager();
   window.scrollTo({top:0, behavior:"smooth"});
 }
@@ -710,7 +715,7 @@ function showManagerForm(type){
   hideManagerForms();
   const card = document.getElementById("bm" + type[0].toUpperCase() + type.slice(1) + "FormCard");
   if(card) card.classList.add("open");
-  if(type === "purchase") document.getElementById("bmPDate").value = bmToday();
+  if(type === "purchase"){document.getElementById("bmPDate").value = bmToday();renderPurchaseMetalPreview();}
   if(type === "shipment") document.getElementById("bmSDate").value = bmToday();
 }
 
@@ -718,12 +723,48 @@ function hideManagerForms(){
   document.querySelectorAll(".manager-form-card").forEach(x => x.classList.remove("open"));
 }
 
+// Owner-only catalogue estimates; missing assays are never treated as zero.
+let bmMetalMap = new Map();
+let bmMetalError = "";
+function bmOz(n){ return n === null || n === undefined ? "Missing data" : Number(n).toLocaleString("en-US",{minimumFractionDigits:6,maximumFractionDigits:6}); }
+function bmPurchaseMetals(p){
+  const m=bmMetalMap.get(norm(p.serial));
+  const qty=Number(p.qty);
+  return ["pt_oz","pd_oz","rh_oz"].map(k=>{
+    const raw=m?.[k];
+    const unit=raw === null || raw === undefined || !Number.isFinite(Number(raw)) || Number(raw)<0 ? null : Number(raw);
+    return {unit,total:unit === null || !Number.isFinite(qty) || qty<=0 ? null : unit*qty};
+  });
+}
+async function loadManagerMetals(){
+  bmMetalMap=new Map(); bmMetalError="";
+  const {data,error}=await db.rpc("niko_owner_metal_ounces");
+  if(error){bmMetalError="Metal data could not load. Run the included ounce SQL update, then reopen Manager.";return;}
+  bmMetalMap=new Map((data||[]).map(x=>[norm(x.code),x]));
+}
+function renderManagerMetalTotals(){
+  const totals=[0,0,0], missing=[0,0,0], known=[0,0,0];
+  for(const p of bmData.purchases) bmPurchaseMetals(p).forEach((x,i)=>{if(x.total===null)missing[i]++;else{totals[i]+=x.total;known[i]++;}});
+  ["bmPtOz","bmPdOz","bmRhOz"].forEach((id,i)=>document.getElementById(id).textContent=known[i] || !bmData.purchases.length ? bmOz(totals[i]) : "—");
+  document.getElementById("bmMetalStatus").textContent=bmMetalError || "Estimated contained metal from current catalogue substrate weight and PPM; totals include quantity. Before recovery; not a refinery assay. " + (missing.some(Boolean) ? `Partial totals: missing Pt data on ${missing[0]}, Pd on ${missing[1]}, Rh on ${missing[2]} purchase rows. Import missing weight/PPM in Owner Price Control.` : "All purchase rows have metal data.");
+}
+function renderPurchaseMetalPreview(){
+  const p={serial:document.getElementById("bmPSerial").value,qty:document.getElementById("bmPQty").value};
+  const m=bmPurchaseMetals(p);
+  document.getElementById("bmPurchaseMetals").textContent=["Pt","Pd","Rh"].map((name,i)=>`${name}: ${bmOz(m[i].unit)} oz/unit; ${bmOz(m[i].total)} oz total`).join(" | ")+". Troy ounces from catalogue substrate weight; the purchase Weight field does not change this estimate.";
+}
+
 function bmPurchaseRows(items, withActions){
-  if(!items.length) return `<tr><td class="manager-empty" colspan="${withActions ? 8 : 6}">No purchases yet</td></tr>`;
-  return items.map(p => `<tr><td>${esc(p.date)}</td><td>${esc(bmCustomerName(p.customerId))}</td><td><b class="gold">${esc(p.serial)}</b></td>${withActions ? `<td>${p.qty}</td>` : ""}<td>${bmMoney(p.cost)}</td><td>${bmMoney(p.value)}</td><td style="color:var(--green)">${bmMoney(Number(p.value)-Number(p.cost))}</td>${withActions ? `<td><button class="manager-delete" onclick="deleteBusinessItem('purchases',${p.id})">Delete</button></td>` : ""}</tr>`).join("");
+  if(!items.length) return `<tr><td class="manager-empty" colspan="${withActions ? 14 : 13}">No purchases yet</td></tr>`;
+  return items.map(p => {
+    const metals=bmPurchaseMetals(p);
+    const cells=metals.map(x=>`<td>${bmOz(x.unit)}</td>`).join("")+metals.map(x=>`<td>${bmOz(x.total)}</td>`).join("");
+    return `<tr><td>${esc(p.date)}</td><td>${esc(bmCustomerName(p.customerId))}</td><td><b class="gold">${esc(p.serial)}</b></td>${withActions ? `<td>${esc(p.qty)}</td>` : ""}<td>${bmMoney(p.cost)}</td><td>${bmMoney(p.value)}</td><td style="color:var(--green)">${bmMoney(Number(p.value)-Number(p.cost))}</td>${withActions ? "" : `<td>${esc(p.qty)}</td>`}${cells}${withActions ? `<td><button class="manager-delete" onclick="deleteBusinessItem('purchases',${p.id})">Delete</button></td>` : ""}</tr>`;
+  }).join("");
 }
 
 function renderBusinessManager(){
+  renderManagerMetalTotals();
   const cost = bmData.purchases.reduce((s,p) => s + Number(p.cost || 0), 0);
   const value = bmData.purchases.reduce((s,p) => s + Number(p.value || 0), 0);
   const qty = bmData.purchases.reduce((s,p) => s + Number(p.qty || 0), 0);
