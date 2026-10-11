@@ -465,11 +465,14 @@ for(const serial of converterImageFiles.keys()){
 let imageRequestId=0;
 let selectedImagePaths=[];
 let selectedImageIndex=0;
+const converterSerialCorrections = new Map([["L0P040","LOP040"]]);
 function imageMatchForSerial(code){
  const serial=String(code||"").trim();
  const exact=converterImageFiles.get(serial);
  if(exact) return {paths:exact,possible:false};
  const normalized=norm(serial);
+ const corrected=converterSerialCorrections.get(normalized);
+ if(corrected && converterImageFiles.has(corrected)) return {paths:converterImageFiles.get(corrected),possible:false};
  const alias=converterImageAliases.get(normalized);
  if(alias) return {paths:converterImageFiles.get(alias),possible:false};
  // Use the closest prefix group available, with at least three characters.
