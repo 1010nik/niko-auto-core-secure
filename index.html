@@ -99,7 +99,9 @@ footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weig
       <button class="btn-secondary" onclick="printOrder()">Print Order</button>
       <button class="btn-secondary" onclick="copyOrderText()">Copy Order</button>
       <button class="btn-danger" onclick="clearOrder()">Clear Order</button>
+      <button id="savePurchaseBtn" class="hidden" onclick="saveOrderToManager()">Save Purchase to Manager</button>
     </div>
+    <p id="orderTransferStatus" class="status" role="status"></p>
     <div class="order-card" id="orderCard">
       <h2 class="print-area-title">Niko Auto Core USA Order</h2>
       <div class="order-head"><span>Customer Order</span><span id="orderCount">0 items</span></div>
@@ -207,6 +209,7 @@ let priceRows = [];
 let users = [];
 let currentResult = null;
 let orderItems = [];
+let orderTransferBusy=false;
 let loggedInUsername = "guest";
 let loginTimeout = null;
 let loginDeadline = 0;
@@ -278,6 +281,7 @@ async function showSearch(user){
  document.getElementById("welcome").textContent="Welcome, "+(user.display_name||"Customer");
  document.getElementById("managerLaunchBtn").classList.toggle("hidden",!isOwner);
  document.getElementById("ownerLaunchBtn").classList.toggle("hidden",!isOwner);
+ document.getElementById("savePurchaseBtn").classList.toggle("hidden",!isOwner);
  await loadExcel(true);
  loadOrder();renderOrder();startLoginTimer();
 }
@@ -563,6 +567,7 @@ function removeOrderItem(i){
 }
 
 function clearOrder(){
+  try{localStorage.removeItem(orderKey()+"_purchase_batch");}catch(e){}
   orderItems = [];
   try{
     localStorage.removeItem(orderKey());
@@ -571,6 +576,8 @@ function clearOrder(){
 }
 
 function renderOrder(){
+  const saveBtn=document.getElementById("savePurchaseBtn");
+  if(saveBtn)saveBtn.disabled=orderTransferBusy || !orderItems.length;
   const list = document.getElementById("orderList");
   const count = document.getElementById("orderCount");
   const totalEl = document.getElementById("orderTotal");
@@ -616,6 +623,47 @@ async function copyOrderText(){
   const text = orderText();
   try{ await navigator.clipboard.writeText(text); alert("Order copied."); }
   catch(e){ prompt("Copy order:", text); }
+}
+
+async function saveOrderToManager(){
+ if(orderTransferBusy || !isOwner || !db || !orderItems.length)return;
+ orderTransferBusy=true; renderOrder();
+ const status=document.getElementById("orderTransferStatus");
+ const snapshot=JSON.stringify(orderItems);
+ let overlay;
+ try{
+  status.textContent="Loading suppliers…";
+  const loaded=await db.rpc("niko_manager_data");
+  if(loaded.error)throw loaded.error;
+  const customers=loaded.data?.customers||[];
+  if(!customers.length){status.textContent="Add the seller under Business Manager → Customers first, then save this buying list.";return;}
+  const lines=orderItems.map(x=>({serial:String(x.code).trim().toUpperCase(),qty:Number(x.qty),cost:priceNumber(x.price)*Number(x.qty),value:priceNumber(exactPriceMap.get(norm(x.code))?.price ?? x.price)*Number(x.qty)}));
+  if(lines.some(x=>!x.serial || !Number.isInteger(x.qty) || x.qty<1 || !Number.isFinite(x.cost) || x.cost<0))throw new Error("Check serials, quantities, and prices first.");
+  overlay=document.createElement("div"); overlay.className="image-modal";
+  overlay.innerHTML=`<div class="image-box" role="dialog" aria-modal="true" aria-labelledby="transferTitle"><h2 id="transferTitle">Save Buying List</h2><p>Select the seller and check the total paid for each serial.</p><label>Seller / Customer<select id="transferCustomer" style="width:100%">${customers.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select></label><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Serial</th><th>Qty</th><th>Total Paid ($)</th></tr></thead><tbody>${lines.map((x,i)=>`<tr><td>${esc(x.serial)}</td><td>${x.qty}</td><td><input type="number" min="0" step="0.01" data-paid="${i}" value="${x.cost.toFixed(2)}" style="min-width:130px"></td></tr>`).join("")}</tbody></table></div><p>Each serial becomes a separate Manager purchase with its own Delete button. Metal totals use catalogue weight and PPM. Your buying list clears after a successful save.</p><p data-error class="error" role="status"></p><div style="display:flex;gap:12px;justify-content:center"><button type="button" data-cancel>Cancel</button><button type="button" data-save>Save Purchase</button></div></div>`;
+  document.body.appendChild(overlay); status.textContent="";
+  const selected=await new Promise(resolve=>{
+   overlay.querySelector('[data-cancel]').onclick=()=>resolve(null);
+   overlay.querySelector('[data-save]').onclick=()=>{
+    const inputs=[...overlay.querySelectorAll('[data-paid]')];
+    if(inputs.some(el=>!el.value.trim() || !el.checkValidity() || !Number.isFinite(Number(el.value)))){overlay.querySelector('[data-error]').textContent="Enter a valid total paid for every serial.";return;}
+    inputs.forEach((el,i)=>lines[i].cost=Number(el.value));
+    resolve(overlay.querySelector('#transferCustomer').value);
+   };
+  });
+  if(selected===null){status.textContent="Transfer cancelled. Buying list kept.";return;}
+  overlay.querySelector('[data-save]').disabled=true;overlay.querySelector('[data-cancel]').disabled=true;
+  const key=orderKey()+"_purchase_batch";
+  let batch=localStorage.getItem(key);
+  if(!batch){batch=crypto.randomUUID();localStorage.setItem(key,batch);}
+  status.textContent="Saving purchase…";
+  const saved=await db.rpc("niko_transfer_order_to_manager",{p_batch:batch,p_customer_id:selected,p_date:bmToday(),p_lines:lines});
+  if(saved.error)throw saved.error;
+  if(JSON.stringify(orderItems)===snapshot)clearOrder();
+  else localStorage.removeItem(key);
+  status.textContent=saved.data?.duplicate ? "This buying list was already saved. No duplicate purchases added." : `Saved ${lines.length} serials to Business Manager. Open Purchases to view or delete each serial.`;
+ }catch(error){status.textContent="Purchase not confirmed: "+(error.message||"connection error")+". Buying list kept. Retry after checking Supabase.";}
+ finally{overlay?.remove();orderTransferBusy=false;renderOrder();}
 }
 
 // ---------------- NIKO BUSINESS MANAGER ----------------
@@ -783,16 +831,43 @@ function renderBusinessManager(){
   document.getElementById("bmShipmentRows").innerHTML = bmData.shipments.length ? bmData.shipments.map(s => `<tr><td>${esc(s.date)}</td><td><b>${esc(s.name)}</b></td><td>${esc(s.refinery)}</td><td>${Number(s.weight || 0).toLocaleString()} lb</td><td>${bmMoney(s.expected)}</td><td>${bmMoney(s.received)}</td><td>${esc(s.status)}</td><td><button class="manager-delete" onclick="deleteBusinessItem('shipments',${s.id})">Delete</button></td></tr>`).join("") : '<tr><td class="manager-empty" colspan="8">No shipments yet</td></tr>';
 }
 
-function deleteBusinessItem(type,id){
-  if(confirm("Delete this business record?")){
-    bmData[type] = bmData[type].filter(x => x.id !== id);
-    saveBusinessData();
-  }
+let bmDeleteBusy=false;
+function bmConfirmDelete(){
+ return new Promise(resolve=>{
+  const overlay=document.createElement("div");
+  overlay.className="image-modal";
+  overlay.innerHTML='<div class="image-box" role="dialog" aria-modal="true" aria-labelledby="bmDeleteTitle"><h2 id="bmDeleteTitle">Delete this business record?</h2><p>This will remove the selected record from your manager.</p><div style="display:flex;gap:12px;justify-content:center"><button type="button" data-cancel>Cancel</button><button type="button" class="manager-delete" data-delete>Delete</button></div><p data-error class="error" role="status"></p></div>';
+  document.body.appendChild(overlay);
+  const finish=value=>{overlay.remove();resolve(value);};
+  overlay.querySelector('[data-cancel]').onclick=()=>finish(false);
+  overlay.querySelector('[data-delete]').onclick=()=>finish(true);
+  overlay.querySelector('[data-cancel]').focus();
+ });
 }
-
+function bmShowDeleteError(message){
+ let el=document.getElementById("bmDeleteError");
+ if(!el){el=document.createElement("p");el.id="bmDeleteError";el.className="error";el.setAttribute("role","status");document.querySelector(".manager-tabs").after(el);}
+ el.textContent=message;
+}
+async function deleteBusinessItem(type,id){
+ if(bmDeleteBusy || !["purchases","customers","shipments"].includes(type))return;
+ if(!isOwner || !db){bmShowDeleteError("Sign in as owner to delete a record.");return;}
+ bmDeleteBusy=true;
+ try{
+  if(!await bmConfirmDelete())return;
+  const next={...bmData,[type]:bmData[type].filter(x=>String(x.id)!==String(id))};
+  if(next[type].length===bmData[type].length){bmShowDeleteError("Record not found. Reopen Manager and try again.");return;}
+  const {error}=await db.rpc("niko_save_manager",{p_data:next});
+  if(error)throw error;
+  bmData=next;
+  bmShowDeleteError("");
+  renderBusinessManager();
+ }catch(error){bmShowDeleteError("Could not delete: "+(error.message||"Connection failed. Try again."));}
+ finally{bmDeleteBusy=false;}
+}
 function deleteBusinessCustomer(id){
-  if(bmData.purchases.some(p => p.customerId === id)){ alert("This customer has purchases and cannot be deleted yet."); return; }
-  deleteBusinessItem("customers", id);
+ if(bmData.purchases.some(p=>String(p.customerId)===String(id))){bmShowDeleteError("This customer has purchases. Remove those purchases first.");return;}
+ deleteBusinessItem("customers",id);
 }
 
 function updateBusinessCustomerDiscount(id,value){
