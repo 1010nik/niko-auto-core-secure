@@ -172,7 +172,7 @@ footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weig
         <div class="manager-field"><label>Weight (grams)</label><input id="bmPWeight" type="number" min="0"></div><div class="manager-field"><label>Notes</label><input id="bmPNotes"></div>
         <p id="bmPurchaseMetals" class="status" style="grid-column:1/-1">Select a serial to see estimated metal ounces.</p><div class="manager-form-actions"><button type="button" class="manager-cancel" onclick="hideManagerForms()">Cancel</button><button>Save Purchase</button></div>
       </form></div>
-      <div class="manager-section"><div class="manager-section-head"><h2>Converter Purchases</h2><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Qty</th><th>Paid</th><th>Value</th><th>Profit</th><th>Pt oz / unit</th><th>Pd oz / unit</th><th>Rh oz / unit</th><th>Pt oz total</th><th>Pd oz total</th><th>Rh oz total</th><th></th></tr></thead><tbody id="bmPurchaseRows"></tbody></table></div></div>
+      <div class="manager-section"><div class="manager-section-head"><h2>Converter Purchases</h2><button class="manager-delete" onclick="deleteAllBusinessPurchases()">Delete All Purchases</button><button class="manager-add" onclick="showManagerForm('purchase')">+ Add Purchase</button></div><div class="manager-table-wrap"><table class="manager-table"><thead><tr><th>Date</th><th>Customer</th><th>Serial</th><th>Qty</th><th>Paid</th><th>Value</th><th>Profit</th><th>Pt oz / unit</th><th>Pd oz / unit</th><th>Rh oz / unit</th><th>Pt oz total</th><th>Pd oz total</th><th>Rh oz total</th><th></th></tr></thead><tbody id="bmPurchaseRows"></tbody></table></div></div>
     </div>
 
     <div id="managerCustomers" class="manager-page">
@@ -832,11 +832,16 @@ function renderBusinessManager(){
 }
 
 let bmDeleteBusy=false;
-function bmConfirmDelete(){
+function bmConfirmDelete(allPurchases=false){
  return new Promise(resolve=>{
   const overlay=document.createElement("div");
   overlay.className="image-modal";
   overlay.innerHTML='<div class="image-box" role="dialog" aria-modal="true" aria-labelledby="bmDeleteTitle"><h2 id="bmDeleteTitle">Delete this business record?</h2><p>This will remove the selected record from your manager.</p><div style="display:flex;gap:12px;justify-content:center"><button type="button" data-cancel>Cancel</button><button type="button" class="manager-delete" data-delete>Delete</button></div><p data-error class="error" role="status"></p></div>';
+  if(allPurchases){
+   overlay.querySelector("#bmDeleteTitle").textContent="Delete all purchases?";
+   overlay.querySelector("p").textContent="This removes all "+bmData.purchases.length+" purchase rows and resets the purchase totals. Customers and shipment records remain saved. This cannot be undone.";
+   overlay.querySelector("[data-delete]").textContent="Delete All Purchases";
+  }
   document.body.appendChild(overlay);
   const finish=value=>{overlay.remove();resolve(value);};
   overlay.querySelector('[data-cancel]').onclick=()=>finish(false);
@@ -863,6 +868,22 @@ async function deleteBusinessItem(type,id){
   bmShowDeleteError("");
   renderBusinessManager();
  }catch(error){bmShowDeleteError("Could not delete: "+(error.message||"Connection failed. Try again."));}
+ finally{bmDeleteBusy=false;}
+}
+async function deleteAllBusinessPurchases(){
+ if(bmDeleteBusy)return;
+ if(!isOwner || !db){bmShowDeleteError("Sign in as owner to delete purchases.");return;}
+ if(!bmData.purchases.length){bmShowDeleteError("There are no purchases to delete.");return;}
+ bmDeleteBusy=true;
+ try{
+  if(!await bmConfirmDelete(true))return;
+  const next={...bmData,purchases:[]};
+  const {error}=await db.rpc("niko_save_manager",{p_data:next});
+  if(error)throw error;
+  bmData=next;
+  bmShowDeleteError("");
+  renderBusinessManager();
+ }catch(error){bmShowDeleteError("Could not delete purchases: "+(error.message||"Connection failed. Try again."));}
  finally{bmDeleteBusy=false;}
 }
 function deleteBusinessCustomer(id){
