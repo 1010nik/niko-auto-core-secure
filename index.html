@@ -472,14 +472,17 @@ function imageMatchForSerial(code){
  const normalized=norm(serial);
  const alias=converterImageAliases.get(normalized);
  if(alias) return {paths:converterImageFiles.get(alias),possible:false};
- // Short queries must not open a broad, unrelated group of pictures.
- if(normalized.length<4) return {paths:[],possible:false};
- const prefix=normalized.slice(0,4);
- const paths=[];
- for(const [pictureSerial,files] of converterImageFiles){
-  if(norm(pictureSerial).startsWith(prefix)) paths.push(...files);
+ // Use the closest prefix group available, with at least three characters.
+ for(const length of [4,3]){
+  if(normalized.length<length) continue;
+  const prefix=normalized.slice(0,length);
+  const paths=[];
+  for(const [pictureSerial,files] of converterImageFiles){
+   if(norm(pictureSerial).startsWith(prefix)) paths.push(...files);
+  }
+  if(paths.length) return {paths:[...new Set(paths)],possible:true,prefix,prefixLength:length};
  }
- return {paths:[...new Set(paths)],possible:paths.length>0,prefix};
+ return {paths:[],possible:false};
 }
 function imagePathsForSerial(code){return imageMatchForSerial(code).paths;}
 function showSimilarImage(i){
@@ -493,7 +496,7 @@ function showConverterImage(code){
  selectedImagePaths=match.paths;
  const note=document.getElementById("imageMatchNote");
  note.classList.toggle("hidden",!match.possible);
- note.textContent=match.possible ? `Possible matching pictures—confirm type. First four characters: ${match.prefix}.` : "";
+ note.textContent=match.possible ? `Possible matching pictures—confirm type. First ${match.prefixLength} characters: ${match.prefix}.` : "";
  selectedImageIndex=0;
  modal.classList.remove("hidden");
  loadConverterPhoto();
