@@ -195,6 +195,7 @@ footer{text-align:center;margin-top:30px}.phone-link{color:var(--gold);font-weig
   <div id="imageModal" class="image-modal hidden" onclick="closeImageModal(event)">
     <div class="image-box" onclick="event.stopPropagation()">
       <div id="imageTitle" class="image-title">Converter Image</div>
+      <div id="imageMatchNote" class="small hidden" style="margin:10px 0;color:var(--gold)"></div>
       <div id="imageMessage" class="image-message">Loading image...</div>
       <img id="converterImage" class="hidden" alt="Catalytic converter image" />
       <div id="imageNavigation" class="hidden" style="margin-top:14px;display:flex;gap:12px;align-items:center;justify-content:center">
@@ -464,13 +465,23 @@ for(const serial of converterImageFiles.keys()){
 let imageRequestId=0;
 let selectedImagePaths=[];
 let selectedImageIndex=0;
-function imagePathsForSerial(code){
+function imageMatchForSerial(code){
  const serial=String(code||"").trim();
  const exact=converterImageFiles.get(serial);
- if(exact) return exact;
- const alias=converterImageAliases.get(norm(serial));
- return alias ? converterImageFiles.get(alias) : [];
+ if(exact) return {paths:exact,possible:false};
+ const normalized=norm(serial);
+ const alias=converterImageAliases.get(normalized);
+ if(alias) return {paths:converterImageFiles.get(alias),possible:false};
+ // Short queries must not open a broad, unrelated group of pictures.
+ if(normalized.length<4) return {paths:[],possible:false};
+ const prefix=normalized.slice(0,4);
+ const paths=[];
+ for(const [pictureSerial,files] of converterImageFiles){
+  if(norm(pictureSerial).startsWith(prefix)) paths.push(...files);
+ }
+ return {paths:[...new Set(paths)],possible:paths.length>0,prefix};
 }
+function imagePathsForSerial(code){return imageMatchForSerial(code).paths;}
 function showSimilarImage(i){
  const item=(window.nikoSimilar||[])[i];
  if(item) showConverterImage(item.code);
@@ -478,7 +489,11 @@ function showSimilarImage(i){
 function showConverterImage(code){
  const modal=document.getElementById("imageModal");
  document.getElementById("imageTitle").textContent=String(code||"Converter Image");
- selectedImagePaths=imagePathsForSerial(code);
+ const match=imageMatchForSerial(code);
+ selectedImagePaths=match.paths;
+ const note=document.getElementById("imageMatchNote");
+ note.classList.toggle("hidden",!match.possible);
+ note.textContent=match.possible ? `Possible matching pictures—confirm type. First four characters: ${match.prefix}.` : "";
  selectedImageIndex=0;
  modal.classList.remove("hidden");
  loadConverterPhoto();
@@ -517,7 +532,9 @@ async function loadConverterPhoto(){
    img.classList.add("hidden");msg.classList.remove("hidden");
    msg.textContent="Could not load this picture. Try opening it again.";
   };
-  img.alt=`Catalytic converter ${document.getElementById("imageTitle").textContent}, picture ${index+1}`;
+  const pictureSerial=paths[index].replace(/__\d+\.png$/i,"");
+  img.alt=`Catalogue picture ${pictureSerial}, picture ${index+1}`;
+  document.getElementById("imageCounter").textContent=`${index+1} / ${paths.length} • ${pictureSerial}`;
   img.src=data.signedUrl;
  }catch(e){
   if(request!==imageRequestId)return;
